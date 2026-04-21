@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="description" content="112 Acil Müdahale Asistanı — Hastane öncesi bakım protokolleri, algoritmalar, doz hesaplama">
+<title>112 Acil Müdahale Asistanı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #D0021B;
+  --red-dark: #A50015;
+  --red-light: #FFEEF0;
+  --red-mid: #FF3347;
+  --navy: #0D1B2A;
+  --navy2: #162236;
+  --slate: #2C3E50;
+  --muted: #6B7C93;
+  --border: rgba(255,255,255,0.08);
+  --border-light: rgba(0,0,0,0.08);
+  --card-bg: #1A2738;
+  --card-bg2: #1E2D40;
+  --text: #F0F4F8;
+  --text2: #A8B8CC;
+  --text3: #6B7C93;
+  --green: #00C48C;
+  --amber: #F5A623;
+  --blue: #4A90E2;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--sans);
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+.app-header {
+  background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+
+.logo-badge {
+  background: var(--red);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.header-titles { flex: 1; min-width: 0; }
+.header-titles h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-titles p {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.header-search {
+  padding: 0 16px 12px;
+  position: relative;
+}
+.header-search input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 14px 9px 36px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  outline: none;
+  transition: border-color .2s;
+}
+.header-search input:focus { border-color: rgba(208,2,27,0.5); }
+.header-search input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* NAV TABS */
+.nav-tabs {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 4px;
+  padding: 0 16px 12px;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.nav-tab .tab-icon { font-size: 18px; line-height: 1; }
+.nav-tab.active {
+  background: var(--red);
+  color: #fff;
+}
+.nav-tab:not(.active):hover { background: rgba(255,255,255,0.06); color: var(--text2); }
+
+/* MAIN */
+main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.card-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.card-icon.red { background: rgba(208,2,27,0.2); }
+.card-icon.amber { background: rgba(245,166,35,0.2); }
+.card-icon.green { background: rgba(0,196,140,0.2); }
+.card-icon.blue { background: rgba(74,144,226,0.2); }
+
+.card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.card-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+.card-body { padding: 14px 16px; }
+
+/* CATEGORY GRID */
+.cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cat-btn {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+  color: var(--text);
+}
+.cat-btn:hover, .cat-btn:active { border-color: var(--red); background: rgba(208,2,27,0.08); }
+.cat-btn .cat-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.cat-btn .cat-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.cat-btn .cat-count { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  font-family: var(--mono);
+}
+
+/* ALGO LIST */
+.algo-list { display: flex; flex-direction: column; gap: 8px; }
+
+.algo-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .2s;
+}
+.algo-item:hover, .algo-item:active { border-color: var(--red); }
+.algo-item .algo-name { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; }
+.algo-item .algo-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+.algo-item .algo-badge.kritik { background: rgba(208,2,27,0.2); color: #FF6B7A; }
+.algo-item .algo-badge.dikkat { background: rgba(245,166,35,0.2); color: #F5A623; }
+.algo-item .chevron { color: var(--text3); font-size: 16px; }
+
+/* BACK BTN */
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: var(--text2);
+  font-size: 13px;
+  font-family: var(--sans);
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: all .2s;
+}
+.back-btn:hover { border-color: rgba(255,255,255,0.2); }
+
+/* DETAIL */
+.detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.detail-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  font-family: var(--mono);
+}
+.detail-badge.kritik { background: rgba(208,2,27,0.2); color: #FF6B7A; border: 1px solid rgba(208,2,27,0.3); }
+.detail-badge.dikkat { background: rgba(245,166,35,0.2); color: #F5A623; border: 1px solid rgba(245,166,35,0.3); }
+
+.steps-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+}
+
+.step-list { list-style: none; counter-reset: steps; }
+.step-list li {
+  counter-increment: steps;
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.55;
+}
+.step-list li:last-child { border-bottom: none; }
+.step-list li::before {
+  content: counter(steps);
+  min-width: 26px; height: 26px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--mono);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.warn-box {
+  background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #F5A623;
+  line-height: 1.55;
+  margin-top: 14px;
+}
+.warn-box::before { content: '⚠ '; font-weight: 700; }
+
+.danger-box {
+  background: rgba(208,2,27,0.1);
+  border: 1px solid rgba(208,2,27,0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #FF6B7A;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+
+.info-box {
+  background: rgba(74,144,226,0.1);
+  border: 1px solid rgba(74,144,226,0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #7EB8FF;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+
+/* DOSE */
+.dose-weight-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dose-weight-row label { font-size: 13px; color: var(--text3); white-space: nowrap; }
+.dose-weight-row input[type=range] { flex: 1; accent-color: var(--red); }
+.dose-weight-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--red-mid);
+  min-width: 60px;
+  text-align: right;
+}
+
+.age-select {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  margin-bottom: 14px;
+  outline: none;
+}
+.age-select option { background: var(--navy2); }
+
+.dose-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.dose-item {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.dose-item .d-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+.dose-item .d-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1;
+}
+.dose-item .d-unit { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+
+/* CPR */
+.cpr-display {
+  text-align: center;
+  padding: 24px 16px;
+}
+.cpr-timer {
+  font-family: var(--mono);
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 4px;
+  line-height: 1;
+  margin-bottom: 8px;
+  transition: color .3s;
+}
+.cpr-timer.pulse { color: var(--red-mid); }
+.cpr-phase {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 20px;
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+}
+.cpr-phase-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--mono);
+  margin-bottom: 20px;
+  transition: all .3s;
+}
+.cpr-phase-badge.compress { background: rgba(208,2,27,0.2); color: #FF6B7A; border: 1px solid rgba(208,2,27,0.3); }
+.cpr-phase-badge.ventilate { background: rgba(0,196,140,0.2); color: #00C48C; border: 1px solid rgba(0,196,140,0.3); }
+
+.cpr-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+.cpr-btn {
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cpr-btn.start { background: var(--red); color: #fff; }
+.cpr-btn.start:hover { background: var(--red-dark); }
+.cpr-btn.stop { background: rgba(255,255,255,0.08); color: var(--text2); border: 1px solid var(--border); }
+.cpr-btn.reset { background: rgba(255,255,255,0.04); color: var(--text3); border: 1px solid var(--border); }
+
+.cpr-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+.cpr-stat {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+}
+.cpr-stat .sv { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); }
+.cpr-stat .sl { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* QUIZ */
+.quiz-progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.quiz-progress-fill {
+  height: 3px;
+  background: var(--red);
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+.quiz-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 14px;
+  font-family: var(--mono);
+}
+.quiz-q {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.quiz-opt {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 14px;
+  color: var(--text2);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all .2s;
+  line-height: 1.4;
+}
+.quiz-opt:not(:disabled):hover { border-color: rgba(255,255,255,0.2); }
+.quiz-opt.correct { background: rgba(0,196,140,0.1); border-color: rgba(0,196,140,0.4); color: #00C48C; }
+.quiz-opt.wrong { background: rgba(208,2,27,0.1); border-color: rgba(208,2,27,0.3); color: #FF6B7A; }
+
+.quiz-explain {
+  background: rgba(74,144,226,0.1);
+  border: 1px solid rgba(74,144,226,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #7EB8FF;
+  line-height: 1.55;
+  margin-bottom: 12px;
+  display: none;
+}
+.quiz-next-btn {
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: none;
+  transition: background .2s;
+}
+.quiz-next-btn:hover { background: var(--red-dark); }
+
+.quiz-result {
+  text-align: center;
+  padding: 20px 0;
+}
+.quiz-result .qr-score {
+  font-family: var(--mono);
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--red-mid);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.quiz-result .qr-label { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.quiz-result .qr-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+.quiz-restart {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+/* EVT */
+.evt-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.evt-tab {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 12px;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all .2s;
+}
+.evt-tab.active { background: rgba(74,144,226,0.2); color: #7EB8FF; border-color: rgba(74,144,226,0.4); }
+
+.evt-sec { display: none; }
+.evt-sec.active { display: block; }
+
+.crit-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.crit-item:last-child { border-bottom: none; }
+.crit-item .ci-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.crit-item.yes .ci-text { color: #00C48C; }
+.crit-item.no .ci-text { color: #FF6B7A; }
+
+.race-score-display {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-top: 14px;
+  text-align: center;
+}
+.race-score-num {
+  font-family: var(--mono);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.race-score-label { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+.race-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.race-row:last-child { border-bottom: none; }
+.race-label { flex: 1; font-size: 13px; color: var(--text2); }
+.race-row input[type=range] { width: 80px; accent-color: var(--blue); }
+.race-val { font-family: var(--mono); font-size: 14px; color: var(--text); min-width: 20px; text-align: center; }
+
+.tl-item {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 16px;
+  position: relative;
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot-col { display: flex; flex-direction: column; align-items: center; }
+.tl-circle {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.tl-line { width: 2px; flex: 1; background: var(--border); min-height: 16px; }
+.tl-content { padding-top: 4px; }
+.tl-time { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 2px; }
+.tl-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.tl-desc { font-size: 12px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
+
+/* METRICS ROW */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.metric-box {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  text-align: center;
+}
+.metric-box .mv {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--red-mid);
+  line-height: 1;
+}
+.metric-box .ml { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.3; }
+
+/* SEARCH RESULTS */
+.search-results { display: none; }
+.no-results { text-align: center; padding: 32px; color: var(--text3); font-size: 14px; }
+
+/* FOOTER */
+.app-footer {
+  text-align: center;
+  padding: 20px 16px 32px;
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.app-footer strong { color: var(--text2); }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.section.active { animation: fadeIn .2s ease; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-top">
+    <div class="logo-badge">112</div>
+    <div class="header-titles">
+      <h1>Acil Müdahale Asistanı</h1>
+      <p>Hastane öncesi bakım protokolleri</p>
+    </div>
+  </div>
+  <div class="header-search">
+    <span class="search-icon">🔍</span>
+    <input type="search" id="search-input" placeholder="Algoritma ara... (AKS, Arrest, Anafilaksi...)" oninput="handleSearch(this.value)">
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('home')" data-tab="home">
+      <span class="tab-icon">🏥</span>Algoritmalar
+    </button>
+    <button class="nav-tab" onclick="showTab('dose')" data-tab="dose">
+      <span class="tab-icon">💉</span>Doz Hesap
+    </button>
+    <button class="nav-tab" onclick="showTab('cpr')" data-tab="cpr">
+      <span class="tab-icon">🫀</span>CPR
+    </button>
+    <button class="nav-tab" onclick="showTab('evt')" data-tab="evt">
+      <span class="tab-icon">🧠</span>EVT / İnme
+    </button>
+    <button class="nav-tab" onclick="showTab('quiz')" data-tab="quiz">
+      <span class="tab-icon">🎯</span>Quiz
+    </button>
+  </nav>
+</header>
+
+<main>
+
+<!-- SEARCH RESULTS -->
+<div class="search-results" id="search-section">
+  <div id="search-results-list" class="algo-list"></div>
+</div>
+
+<!-- HOME -->
+<div class="section active" id="tab-home">
+  <div id="view-cats">
+    <p class="section-label">Yetişkin Protokolleri</p>
+    <div class="cat-grid" id="adult-cats"></div>
+    <p class="section-label">Çocuk Protokolleri</p>
+    <div class="cat-grid" id="child-cats"></div>
+  </div>
+
+  <div id="view-list" style="display:none">
+    <button class="back-btn" onclick="backToCats()">← Kategoriler</button>
+    <div class="algo-list" id="algo-list-items"></div>
+  </div>
+
+  <div id="view-detail" style="display:none">
+    <button class="back-btn" onclick="backToList()">← Geri</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- DOSE -->
+<div class="section" id="tab-dose">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon amber">👶</div>
+      <div>
+        <div class="card-title">Çocuk Doz Hesaplama</div>
+        <div class="card-sub">Kilo bazlı kritik ilaç dozları</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="dose-weight-row">
+        <label>Kilo</label>
+        <input type="range" min="1" max="80" value="20" step="0.5" id="weight-slider" oninput="calcDose(this.value)">
+        <span class="dose-weight-val" id="weight-val">20 kg</span>
+      </div>
+      <select class="age-select" onchange="ageToWeight(this.value)">
+        <option value="">Yaşa göre kilo tahmini...</option>
+        <option value="1">1 yaş — ~10 kg</option>
+        <option value="2">2 yaş — ~12 kg</option>
+        <option value="3">3 yaş — ~14 kg</option>
+        <option value="4">4 yaş — ~16 kg</option>
+        <option value="5">5 yaş — ~18 kg</option>
+        <option value="6">6 yaş — ~20 kg</option>
+        <option value="7">7 yaş — ~22 kg</option>
+        <option value="8">8 yaş — ~25 kg</option>
+        <option value="9">9 yaş — ~28 kg</option>
+        <option value="10">10 yaş — ~32 kg</option>
+        <option value="12">12 yaş — ~38 kg</option>
+        <option value="14">14 yaş — ~50 kg</option>
+      </select>
+      <div class="dose-grid" id="dose-grid"></div>
+      <div class="warn-box" style="margin-top:12px">Dozlar Broselow bandı ve T.C. Sağlık Bakanlığı protokollerine göre hesaplanmıştır. Kesin doz kararı için sorumlu hekim ve AEP protokolünü esas alın.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">💊</div>
+      <div>
+        <div class="card-title">Acil İlaç Hazırlama Notları</div>
+        <div class="card-sub">Yaygın ilaçlar</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        <p style="margin-bottom:8px"><strong style="color:var(--text)">Adrenalin 1:1000 (1 mg/mL):</strong> Anafilakside IM kullanım için doğrudan uygulanır. IV için 1:10.000 (0.1 mg/mL) sulandırılır.</p>
+        <p style="margin-bottom:8px"><strong style="color:var(--text)">Amiodaron 150 mg:</strong> 100 mL %5 Dekstroz içinde 10 dk'da IV infüzyon. Periferik hatla verilirse flebite dikkat.</p>
+        <p style="margin-bottom:8px"><strong style="color:var(--text)">Magnezyum Sülfat %15:</strong> Astım/Preeklampsi: 20-30 dk'da yavaş IV. Hızlı verilmesi kardiyak arrest yapabilir.</p>
+        <p style="margin-bottom:8px"><strong style="color:var(--text)">Adenozin 6 mg:</strong> Hızlı IV push + SF flush. T1/2 = 10 sn. EKG kaydı yaparken ver.</p>
+        <p><strong style="color:var(--text)">Midazolam intranasal:</strong> 0.2 mg/kg, atomizörle nazal mukozaya. Etkisi 2-3 dk'da başlar.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CPR -->
+<div class="section" id="tab-cpr">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon red">🫀</div>
+      <div>
+        <div class="card-title">CPR Sayacı</div>
+        <div class="card-sub">30:2 protokolü · 100-120 kompresyon/dk</div>
+      </div>
+    </div>
+    <div class="cpr-display">
+      <div class="cpr-timer" id="cpr-timer">02:00</div>
+      <div class="cpr-phase-badge compress" id="cpr-phase-badge">⬇ KOMPRESYONlar — 30 BASI</div>
+      <div class="cpr-btns">
+        <button class="cpr-btn start" onclick="cprStart()">▶ Başlat</button>
+        <button class="cpr-btn stop" onclick="cprStop()">⏸ Durdur</button>
+        <button class="cpr-btn reset" onclick="cprReset()">↺ Sıfırla</button>
+      </div>
+      <div class="cpr-stats">
+        <div class="cpr-stat"><div class="sv" id="cpr-cycles">0</div><div class="sl">Döngü</div></div>
+        <div class="cpr-stat"><div class="sv" id="cpr-total">0:00</div><div class="sl">Toplam</div></div>
+        <div class="cpr-stat"><div class="sv" id="cpr-next">2:00</div><div class="sl">Ritim kont.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon red">⚡</div>
+      <div>
+        <div class="card-title">Defibrilasyon Dozları</div>
+        <div class="card-sub">VF / pVT</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="dose-grid" style="grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="dose-item"><div class="d-name">Bifazik (yetişkin)</div><div class="d-val">120–200</div><div class="d-unit">joule</div></div>
+        <div class="dose-item"><div class="d-name">Monofazik</div><div class="d-val">360</div><div class="d-unit">joule</div></div>
+        <div class="dose-item"><div class="d-name">Çocuk (ilk)</div><div class="d-val">2 J/kg</div><div class="d-unit">max 200 J</div></div>
+        <div class="dose-item"><div class="d-name">Çocuk (sonraki)</div><div class="d-val">4 J/kg</div><div class="d-unit">max 10 J/kg</div></div>
+        <div class="dose-item"><div class="d-name">Adrenalin</div><div class="d-val">1 mg</div><div class="d-unit">IV her 3-5 dk</div></div>
+        <div class="dose-item"><div class="d-name">Amiodaron</div><div class="d-val">300 mg</div><div class="d-unit">IV bolus</div></div>
+      </div>
+      <div class="danger-box">Her 2 dk'da ritim kontrolü yap. Kompresyon kesintisini minimize et — 10 sn'den fazla ara verme.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon amber">🔄</div>
+      <div>
+        <div class="card-title">Geri Dönüşümlü Nedenler</div>
+        <div class="card-sub">6H + 6T</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;color:var(--text2)">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;font-family:var(--mono)">6H</div>
+          <div style="line-height:2">Hipoksi<br>Hipovolemi<br>Hidrojen iyonu<br>Hipo/Hiperkalemi<br>Hipotermia<br>Hipoglisemi</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;font-family:var(--mono)">6T</div>
+          <div style="line-height:2">Tansiyon pnömotoraks<br>Tamponad<br>Toksin<br>Tromboz (PE)<br>Tromboz (AKS)<br>Travma</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EVT -->
+<div class="section" id="tab-evt">
+  <div class="metrics-row">
+    <div class="metric-box"><div class="mv">90 sn</div><div class="ml">Ambulans çıkış hedefi</div></div>
+    <div class="metric-box"><div class="mv">≤15 dk</div><div class="ml">Olay yeri süresi</div></div>
+    <div class="metric-box"><div class="mv">6 sa</div><div class="ml">Standart EVT penceresi</div></div>
+    <div class="metric-box"><div class="mv">24 sa</div><div class="ml">Seçili hastada EVT</div></div>
+  </div>
+
+  <div class="evt-tabs">
+    <button class="evt-tab active" onclick="showEvt('ambulans')">112 Saha</button>
+    <button class="evt-tab" onclick="showEvt('kriter')">Hasta Seçimi</button>
+    <button class="evt-tab" onclick="showEvt('race')">RACE Skoru</button>
+    <button class="evt-tab" onclick="showEvt('zaman')">Zaman</button>
+  </div>
+
+  <div class="evt-sec active" id="evt-ambulans">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon red">🚑</div>
+        <div><div class="card-title">112 İnme Şüphesi — Saha Protokolü</div><div class="card-sub">AHA/ASA 2026 kılavuzu</div></div>
+      </div>
+      <div class="card-body">
+        <ul class="step-list">
+          <li><span><strong>FAST testi:</strong> Yüz asimetrisi, Kol güçsüzlüğü, Konuşma bozukluğu — hepsini kayıt altına al</span></li>
+          <li><span><strong>LKW (Son iyi görülme zamanı)</strong> sor ve dakika olarak belgele. Uyandığında fark edilmişse uyku başlangıcı esas alınır.</span></li>
+          <li><span>ABC değerlendir, oksijen uygula — SpO2 hedef ≥94%</span></li>
+          <li><span>Kan şekeri ölç — hipoglisemi inme taklidi yapabilir. KŞ &lt;60 mg/dL ise önce Dekstroz</span></li>
+          <li><span>İV damar yolu aç (tercihen 2 koldan)</span></li>
+          <li><span><strong>RACE skoru hesapla</strong> — Büyük Damar Oklüzyonu (LVO) şüphesi değerlendir</span></li>
+          <li><span><strong>Hastane ön bildirimi yap</strong> — inme ekibini aktive et, LKW ve RACE skorunu ilet</span></li>
+          <li><span>EVT kapasiteli inme merkezine yönlendir (yoksa IVT yapan en yakın merkeze)</span></li>
+          <li><span>SKB ≥220 mmHg ise kontrollü antihipertansif — Labetolol/Nikardipin (hekim onayı ile)</span></li>
+          <li><span>Transport boyunca sürekli monitorizasyon: EKG, SpO2, bilinç düzeyi</span></li>
+        </ul>
+        <div class="warn-box">Kan basıncını aşırı düşürme. Tromboliz adayıysa SKB hedef &lt;185/110 mmHg. Hipotansiyonu mutlaka önle — serebral perfüzyon bozulur.</div>
+        <div class="info-box">Hastane ön bildirimi (prenotification) tromboliz oranlarını artırır ve mortaliteyi azaltır — atlanmamalı.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="evt-sec" id="evt-kriter">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon green">✓</div>
+        <div><div class="card-title">EVT Uygunluk Kriterleri</div><div class="card-sub">Tümü karşılanmalı</div></div>
+      </div>
+      <div class="card-body">
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">18 yaş üzeri (üst sınır fonksiyonel duruma göre)</span></div>
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">NIHSS ≥6 (anterior dolaşım LVO)</span></div>
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">İKA, M1/M2 MCA, A1/A2 ACA, P1/P2 PCA veya baziler arter oklüzyonu</span></div>
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">LKW'den itibaren &lt;6 saat (seçili hastalarda 6-24 saat)</span></div>
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">ASPECTS ≥6 (BT'de büyük infarkt alanı yok)</span></div>
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">Premorbid mRS 0-1 (bağımsız yaşam)</span></div>
+        <div class="crit-item yes"><span class="ci-icon">✓</span><span class="ci-text">IVT uygunsa önce ver — EVT'yi geciktirme (köprü tedavisi)</span></div>
+        <div class="info-box" style="margin-top:12px">6-24 saat penceresi: DAWN / DEFUSE-3 kriterleri esas alınır. Klinik-radyolojik uyumsuzluk (mismatch) gösterilmeli.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon red">✗</div>
+        <div><div class="card-title">Mutlak Kontrendikasyonlar</div><div class="card-sub">EVT yapılmaz</div></div>
+      </div>
+      <div class="card-body">
+        <div class="crit-item no"><span class="ci-icon">✗</span><span class="ci-text">İntrakraniyal kanama (hemorajik inme, SAK, SDH)</span></div>
+        <div class="crit-item no"><span class="ci-icon">✗</span><span class="ci-text">ASPECTS &lt;6 — büyük infarkt alanı (reperfüzyon hasarı riski)</span></div>
+        <div class="crit-item no"><span class="ci-icon">✗</span><span class="ci-text">Hemodinamik instabilite / tedaviye dirençli şok</span></div>
+        <div class="crit-item no"><span class="ci-icon">✗</span><span class="ci-text">Yaşam beklentisi &lt;3 ay (terminal malignite vb.)</span></div>
+        <div class="danger-box">IVT kontrendike ama LVO var → EVT için doğrudan trombektomi merkezi bildir.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="evt-sec" id="evt-race">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon blue">📊</div>
+        <div><div class="card-title">RACE Skoru — LVO Tarama</div><div class="card-sub">≥5 → EVT merkezi bildirimi</div></div>
+      </div>
+      <div class="card-body">
+        <div class="race-row"><span class="race-label">Yüz felci (0-2)</span><input type="range" min="0" max="2" value="0" step="1" oninput="calcRace()" id="r1"><span class="race-val" id="r1v">0</span></div>
+        <div class="race-row"><span class="race-label">Kol motor (0-1)</span><input type="range" min="0" max="1" value="0" step="1" oninput="calcRace()" id="r2"><span class="race-val" id="r2v">0</span></div>
+        <div class="race-row"><span class="race-label">Bacak motor (0-1)</span><input type="range" min="0" max="1" value="0" step="1" oninput="calcRace()" id="r3"><span class="race-val" id="r3v">0</span></div>
+        <div class="race-row"><span class="race-label">Baş/göz deviasyonu (0-1)</span><input type="range" min="0" max="1" value="0" step="1" oninput="calcRace()" id="r4"><span class="race-val" id="r4v">0</span></div>
+        <div class="race-row"><span class="race-label">Afazi / Agnozi (0-2)</span><input type="range" min="0" max="2" value="0" step="1" oninput="calcRace()" id="r5"><span class="race-val" id="r5v">0</span></div>
+        <div class="race-score-display">
+          <div class="race-score-num" id="race-num">0</div>
+          <div class="race-score-label" id="race-label">LVO düşük olasılık</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="evt-sec" id="evt-zaman">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon red">⏱</div>
+        <div><div class="card-title">EVT Zaman Hedefleri</div><div class="card-sub">Her dakika 1.9 milyon nöron</div></div>
+      </div>
+      <div class="card-body">
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(255,255,255,0.08);color:var(--text2)">T0</div><div class="tl-line"></div></div>
+          <div class="tl-content"><div class="tl-time">Başlangıç</div><div class="tl-title">Semptom başlangıcı (LKW)</div><div class="tl-desc">Son görüldüğü iyi zamanı dakika olarak belgele</div></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(0,196,140,0.2);color:#00C48C">90s</div><div class="tl-line"></div></div>
+          <div class="tl-content"><div class="tl-time">Çağrı sonrası</div><div class="tl-title">Ambulans çıkış hedefi</div><div class="tl-desc">2026 AHA/ASA kalite metriği</div></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(0,196,140,0.2);color:#00C48C">15dk</div><div class="tl-line"></div></div>
+          <div class="tl-content"><div class="tl-time">Olay yeri</div><div class="tl-title">Olay yeri ≤15 dk</div><div class="tl-desc">RACE hesapla, IV erişim, kan şekeri, ön bildirim</div></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(245,166,35,0.2);color:#F5A623">25dk</div><div class="tl-line"></div></div>
+          <div class="tl-content"><div class="tl-time">Kapı → BT</div><div class="tl-title">Görüntüleme ≤25 dk</div><div class="tl-desc">BT anjio dahil — LVO konfirmasyonu</div></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(245,166,35,0.2);color:#F5A623">45dk</div><div class="tl-line"></div></div>
+          <div class="tl-content"><div class="tl-time">Kapı → İğne (IVT)</div><div class="tl-title">tPA ≤45 dk</div><div class="tl-desc">Uygunsa önce ver, EVT'yi geciktirme</div></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(208,2,27,0.2);color:#FF6B7A">90dk</div><div class="tl-line"></div></div>
+          <div class="tl-content"><div class="tl-time">Kapı → Kasık</div><div class="tl-title">EVT ≤90 dk</div><div class="tl-desc">Femoral ponksiyon başlangıcı hedefi</div></div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot-col"><div class="tl-circle" style="background:rgba(208,2,27,0.3);color:#FF6B7A">6sa</div></div>
+          <div class="tl-content"><div class="tl-time">LKW → EVT</div><div class="tl-title">Standart EVT penceresi</div><div class="tl-desc">Seçili hastalarda 6-24 saat (DAWN/DEFUSE-3)</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section" id="tab-quiz">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon red">🎯</div>
+      <div><div class="card-title">Protokol Quiz</div><div class="card-sub" id="quiz-sub">10 soru · Karışık</div></div>
+    </div>
+    <div class="card-body" id="quiz-body">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-prog" style="width:10%"></div></div>
+      <div class="quiz-meta">
+        <span id="quiz-num">Soru 1 / 10</span>
+        <span id="quiz-score-live">0 doğru</span>
+      </div>
+      <div class="quiz-q" id="quiz-q"></div>
+      <div class="quiz-opts" id="quiz-opts"></div>
+      <div class="quiz-explain" id="quiz-explain"></div>
+      <button class="quiz-next-btn" id="quiz-next" onclick="nextQuestion()">Sonraki →</button>
+      <div id="quiz-result" style="display:none">
+        <div class="quiz-result">
+          <div class="qr-score" id="qr-score-num"></div>
+          <div class="qr-label" id="qr-label"></div>
+          <div class="qr-sub" id="qr-sub"></div>
+          <button class="quiz-restart" onclick="initQuiz()">Tekrar Başla</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer class="app-footer">
+  <strong>112 Acil Müdahale Asistanı</strong><br>
+  T.C. Sağlık Bakanlığı protokolleri · AHA/ASA 2026 kılavuzu<br>
+  Bu uygulama klinik karar desteği amaçlıdır.<br>
+  Kesin tedavi kararı için sorumlu hekimi esas alın.<br>
+  <strong>Zehir Danışma: 114</strong>
+</footer>
+
+<script>
+// ===================== DATA =====================
+const ALGOS = {
+  adult: {
+    "Kardiyak": {icon:"🫀", items:[
+      {name:"AKS (Akut Koroner Sendrom)", badge:"kritik",
+       steps:["Hasta değerlendirmesi: ABC, vital bulgular, bilinç düzeyi","12 derivasyonlu EKG çek — 10 dakika içinde","IV/IO erişim sağla","ASA 300 mg PO (kontrendikasyon yoksa)","Nitrogliserin 0.4 mg SL — SKB >90 mmHg ise (sağ VT tutulumuna dikkat)","Morfin 2-4 mg IV titrasyon ile (gerekirse, dikkatli)","Oksijen: SpO2 <94 ise uygula","Hedef hastane bildir, kapıdan-balone süreyi minimize et"],
+       warn:"STEMI'de birincil PCI tercih edilir. Kapı-balon <90 dk hedefle. Sağ ventrikül tutulumu şüphesinde nitrogliserin verme.",
+       info:"EKG bulguları: STEMI → ST elevasyonu ≥1 mm ekstremite, ≥2 mm prekordiyal. Yeni LBBB de STEMI eşdeğeridir."},
+      {name:"Kardiyak Arrest (VF/pVT)", badge:"kritik",
+       steps:["CPR başla — yüksek kalite, kesintisiz bası","AED/defibrilatör bağla ve analiz et","Şok verilebilir ritim → 200 J bifazik (çocuk: 2 J/kg)","Şok sonrası 2 dk kesintisiz CPR","IV/IO erişim — Adrenalin 1 mg IV her 3-5 dk","Amiodarone 300 mg IV (2. şok sonrası) + 150 mg (3. şok sonrası)","Geri dönüşümlü nedenleri ara: 6H / 6T","ROSC sonrası TTM ve hedef hastane"],
+       warn:"6H: Hipoksi, Hipovolemi, Hidrojen iyonu, Hipo/Hiperkalemi, Hipotermia, Hipoglisemi. 6T: Tansiyon pnömotoraks, Tamponad, Toksin, Tromboz(PE), Tromboz(AKS), Travma.",
+       info:"Yüksek kaliteli CPR: 5-6 cm derinlik, 100-120/dk frekans, tam göğüs açılımı, 10 sn'den az kesinti."},
+      {name:"Kardiyak Arrest (Nabızsız EA / Asistoli)", badge:"kritik",
+       steps:["CPR derhal başla — kesintisiz","IV/IO erişim","Adrenalin 1 mg IV hemen ver — her 3-5 dk tekrar","Geri dönüşümlü nedenleri ara: 6H/6T","Asistoli onayı: 2 derivasyonda izokontakt hattı","Nabızsız EKG ritmi varsa kalp tamponadı, PE, pnömotoraks ekarte et","Resüsitasyona devam kararı: en az 20 dk CPR"],
+       warn:"Asistolide şok verilmez. Adrenalin tek farmakolojik seçenektir. EKG elektrodu yerleşimi doğrulan."},
+      {name:"Bradikardi (Semptomatik)", badge:"dikkat",
+       steps:["ABC değerlendir, oksijen uygula","12 derivasyon EKG","Semptom varlığını sorgula: hipotansiyon, senkop, göğüs ağrısı, akut bilinç değişikliği","Atropin 0.5 mg IV — max 3 mg'a kadar tekrar (3-5 dk ara)","Cevap yok → Transkutan pacemaker hazırla","Dopamin 2-20 mcg/kg/dk IV veya Adrenalin 2-10 mcg/dk IV","Transvenöz pacing gereksinimi değerlendir"],
+       warn:"Tam AV blokta Atropin etkisiz olabilir. Pacemaker'a her zaman hazırlıklı ol. Yüksek dereceli blokta elektriksel pacing öncele."},
+      {name:"Taşikardi (Geniş QRS)", badge:"dikkat",
+       steps:["Hemodinamik durumu değerlendir — stabil mi?","Stabil değil → Senkronize kardiyoversiyon 100-200 J","Stabil, VT şüphesi → Amiodaron 150 mg IV 10 dk'da","Ayırt etmek için Adenozin düşün: 6 mg IV hızlı push (SVT ise döner)","12 derivasyon EKG kaydet","Elektrolit bozukluklarını düzelt (Mg, K)","Uzman danışmanlığı al"],
+       warn:"WPW sendromunda AVnodal blokerler (adenozin, diltiazem, verapamil, beta bloker) kontrendike. Hemodinamik instabilite → anında kardiyoversiyon."},
+      {name:"Kardiyojenik Şok", badge:"kritik",
+       steps:["ABC, oksijen yüksek akım","Geniş IV erişim","12 derivasyon EKG — AKS ekarte et","SKB <90 mmHg + hipoperfüzyon bulguları: soğuk-ıslak ekstremite, bilinç değişikliği","Dikkatli sıvı: 250 mL SF bolus (fazla sıvı pulmoner ödemi kötüleştirir)","Noradrenalin 0.1-0.3 mcg/kg/dk IV infüzyon (ilk tercih)","Dobutamin 2-20 mcg/kg/dk IV (inotrop desteği)","İntra-aortik balon pompası veya mekanik destek için kateter lab bildir"],
+       warn:"Sıvı resüsitasyonu kısıtlı tut. Pulmoner ödem kliniği varsa yüksek akım O2, CPAP düşün."},
+      {name:"Anafilaksi", badge:"kritik",
+       steps:["Adrenalin 0.5 mg IM (1:1000) — uyluk lateral yüzü (tercih)","Hastayı yatır, bacakları kaldır (şok pozisyonu; solunum sıkıntısı yoksa)","Oksijen yüksek akım (maske)","IV erişim — Kristaloid 500-1000 mL bolus","5-15 dk'da Adrenalin tekrar (gerekirse)","Difenhidramin 25-50 mg IV/IM","Metilprednizolon 125 mg IV","Bronkospazm varsa: Salbutamol nebulizasyon","IV Adrenaline geçiş: 0.1-0.3 mg yavaş titrasyon (refrakter olgularda)"],
+       warn:"Adrenalin ilk ve en kritik ilaçtır — gecikme ölüme neden olabilir. IM yol IV'e tercih edilir. İkinci doz hazır beklet."},
+      {name:"Hipovolemik Şok", badge:"kritik",
+       steps:["İki geniş IV/IO erişim","Oksijen — non-rebreather maske","Kristaloid 500 mL bolus IV hızlı — yanıtı değerlendir","Kanama kaynağını kontrol et — bası bandajı / turnike","SKB hedef: penetran travmada 80-90, künt travmada 90 mmHg","Transfüzyon gereksinimi değerlendir: 1:1:1 protokol (pRBC:FFP:PLT)","Noradrenalin bridge tedavisi (hayati tehdit durumunda)","Acil cerrahi bildir"],
+       warn:"Aşırı sıvı resüsitasyonundan kaçın. Aktif kanamada permisif hipotansiyon hedefle. Laktat ve baz açığını takip et."},
+    ]},
+    "Solunum": {icon:"🫁", items:[
+      {name:"Astım (Ağır Atak)", badge:"dikkat",
+       steps:["Oksijen hedef SpO2 ≥93%","Salbutamol 2.5-5 mg nebulizasyon (ilk saatte her 20 dk)","İpratropium 0.5 mg nebulizasyon (ilk 3 doza ekle)","Prednizon 40-60 mg PO veya Metilprednizolon 80 mg IV","Magnezyum Sülfat 2 g IV 20 dk'da (ağır atakta)","Yanıt yok → Helioks, Non-invazif ventilasyon","Entübasyon: Ketamin 1-2 mg/kg IV (bronkodilatatör etkisi var)"],
+       warn:"Sessiz akciğer = ağır bronkospazm, çok kötü prognoz işareti. Aşırı hava hapsine dikkat (oto-PEEP). Entübasyonda yüksek PIP bekle."},
+      {name:"KOAH Alevlenmesi", badge:"dikkat",
+       steps:["Oksijen: hedef SpO2 88-92% (hiperkapnik solunum yetmezliği riski)","Salbutamol 2.5 mg + İpratropium 0.5 mg nebulizasyon","Sistemik kortikosteroid: Prednizon 40 mg PO veya Metilprednizolon 40 mg IV","Non-invazif ventilasyon (BiPAP/CPAP) — pH <7.35 ve PaCO2 yüksek ise erken","Antibiyotik (pürülan balgam veya ateş varsa)","Entübasyon: son seçenek, NIV'e yanıt yoksa"],
+       warn:"KOAH'ta yüksek O2 hiperkapniyi kötüleştirebilir. Hedef saturasyon 88-92%. NIV'i erken düşün — ventilasyonu destekler."},
+    ]},
+    "Nörolojik": {icon:"🧠", items:[
+      {name:"İnme / SVH (Akut)", badge:"kritik",
+       steps:["FAST testi — semptom başlangıç zamanını kayıt altına al (LKW)","Hemorajik/iskemik ayrımı görüntüleme olmadan mümkün değil","IV erişim, kan şekeri kontrol (hipoglisemi önce ekarte)","SKB >220 → kontrollü düşür; tromboliz adayıysa <185/110 hedefle","tPA için uygunluk: iskemik inme + 4.5 saatlik pencere","İnme merkezi ön bildirimi — kapı-görüntüleme <25 dk","LVO varsa EVT protokolüne geç (EVT sekmesi)"],
+       warn:"Kan basıncını aşırı düşürme. Hipoglisemi inme taklidi yapabilir. Ateş ve hiperglisemiyi kontrol altına al."},
+      {name:"Status Epileptikus", badge:"kritik",
+       steps:["Güvenli ortam, havayolu açıklığı sağla, zaman tut","Benzodiazepin — ilk ve kesinlikle geciktirme:","İntranasal Midazolam 0.2 mg/kg (IV erişim yoksa ilk tercih)","Diyazepam 10 mg IV veya rektal 5 dk'da tekrar edilebilir","Lorazepam 0.1 mg/kg IV","Benzodiazepin direnci (5 dk): Valproat 25-45 mg/kg IV veya Levetirasetam 60 mg/kg IV","2. basamak yanıt yok (20 dk): Fenitoin 20 mg/kg IV yavaş","Refraktar status: Propofol infüzyon + entübasyon + EEG","Kan şekeri, elektrolit, ateş tedavisini eş zamanlı yap"],
+       warn:"5 dk'dan uzun nöbet = status epileptikus. Benzodiazepin gecikmesiz ver. Hipoglisemi mutlaka ekarte et.",
+       info:"Febril nöbet: >5 dk veya fokal başlangıç → status şüphesi. Birden fazla nöbet veya tam iyileşme yoksa medikal müdahale."},
+      {name:"Kafa Travması (Ağır TBH)", badge:"kritik",
+       steps:["Boyun immobilizasyonu — C-spine koruması","ABC + GKS değerlendirmesi + pupil muayenesi","GKS ≤8 → entübasyon (RSI: Ketamin + Rokuronyum veya Suksinilkolin)","Hedef: PaO2 >100 mmHg, PaCO2 35-40 mmHg (normoventilasyon)","SKB ≥90 mmHg koru — hipotansiyon beyin hasarını artırır","Herniasyon bulguları (Cushing, anizokori): Manitol 0.5-1 g/kg IV veya Hipertonik salin %3 250 mL","Nöbet profilaksisi: Levetirasetam 500-1000 mg IV","Antikoagülan kullanımını sorgula, revers et"],
+       warn:"Hipoksi ve hipotansiyon TBH'de ikincil hasar yapar — öncelikli yönet. Rutin hiperventilasyon önerilmez (herniasyon dışında). Asıl tehlike fark edilemeyen hemorajidir."},
+      {name:"Vertigo (Santral vs Periferik)", badge:"dikkat",
+       steps:["Bilinç, yürüyüş, koordinasyon değerlendir","HINTS muayenesi: Head Impulse, Nystagmus yönü, Test of Skew","Tehlike işaretleri (santral): yeni baş ağrısı, diplobi, disfaji, yüz uyuşması, ataksi","Periferik vertigo: BPPV (Epley manevrası), Vestibüler nevrit","Santral bulgu varsa → ivedilikle inme protokolü","Semptomatik tedavi: Metoklopramid 10 mg IV + Difenhidramin 25 mg IV","Dekompanse hastalarda izlem ve hidrasyon"],
+       warn:"Genç yaşta akut vestibüler sendrom + yürüme bozukluğu → ALWAYS santral ekarte et. HINTS'in MRI'dan daha duyarlı olduğunu unutma."},
+    ]},
+    "Diğer": {icon:"🚑", items:[
+      {name:"Hipoglisemi", badge:"dikkat",
+       steps:["Kan şekeri <70 mg/dL + semptom","Bilinçli hasta: 15-20 g hızlı karbonhidrat PO (meyve suyu, şeker, glukoz tableti)","Bilinçsiz/IV erişim var: Dekstroz %50 → 25-50 mL IV (veya %10 → 150-200 mL)","IV erişim yok: Glukagon 1 mg IM/SC","15 dk sonra tekrar ölç","Uzun etkili ilaç (sülfonyüre/insülin) var ise dikkat — tekrarlayabilir","Dekstroz infüzyonu ile idameye geç"],
+       warn:"Sülfonyüre veya insülin kaynaklı hipoglisemide taburculuk öncesi mutlaka gözlem. Steroid kaynaklı hiperglisemi yönetimi ile karıştırma."},
+      {name:"Yanık", badge:"dikkat",
+       steps:["Güvenli ortam — maruziyeti sonlandır","Hava yolu değerlendir: yüz/boyun yanığı, sinlenmiş kaş/kirpik, öksürük → erken entübasyon!","Soğuk su (15-25°C) 20 dk — buz yasak, hipotermiyi önle","Yanık yüzey alanı: 9'lar kuralı (baş %9, kol %9, bacak %18, gövde ön %18, arka %18)","Parkland formülü: 4 mL × kg × %TBSA = 24 saat sıvı","İlk 8 saatte yarısını ver, kalan 16 saatte diğer yarısını","Analjezi: Morfin 0.1 mg/kg IV titrasyon veya Ketamin 0.3 mg/kg IV","Tetanoz profilaksisi","Steril kuru sargı veya poliüretan film ile örtme"],
+       warn:">%20 TBSA veya özel lokalizasyon (el, yüz, genital, eklem, çepeçevre) → yanık merkezi sevki. Buz uygulamak doku hasarını artırır."},
+      {name:"Zehirlenme (Genel Yaklaşım)", badge:"dikkat",
+       steps:["Güvenli ortam — sağlık personelini koru","Zehir Danışma Hattı: 114 (7/24)","Maruz kalan maddeyi tanımla: miktar, zaman, yol","ABC — bilinç değerlendirme, pupil muayenesi","Dekontaminasyon: cilt/göz teması → 20 dk su ile yıkama","Aktif kömür: bilinçli + ağız yolu + <1 saat + kontrendikasyon yok","Spesifik antidotlar: Naloksan (opioid), Atropin+Pralidoksim (organofosfat), Fizostigmin (antikolinerjik), N-Asetilsistein (parasetamol)","EKG, bilinç, vital, idrar çıkışı monitorizasyonu"],
+       warn:"Tüm antidot kararları hekim koordinasyonuyla. Asemptomatik hasta bile 4-6 saat gözlem. Toksidrom tanıma: kolinerjik, antikolinerjik, opioid, sempatomimetik.",
+       info:"Kolinerjik tablo (SLUDGE): Salivasyon, Lakrimasyon, Üriner inkontinans, Defekasyon/Diyare, GI kramp, Emezis. Antikolinerjik: ateş, kuru deri, midriazis, taşikardi, retansiyon."},
+      {name:"Gebe HT / Eklampsi", badge:"kritik",
+       steps:["Güvenli pozisyon — sol lateral dekübitus","Oksijen yüksek akım","IV erişim","SKB ≥160 veya DKB ≥110 → Labetolol 20 mg IV veya Hidralazin 5-10 mg IV","Nöbet tedavisi ve profilaksisi: Magnezyum Sülfat 4-6 g IV yükleme doz (15-20 dk)","İdame: MgSO4 1-2 g/saat IV infüzyon","MgSO4 toksisitesi: Kalsiyum Glukonat 1 g IV antidot","Fetal kalp hızını izle","İvedi doğum kararı için perinatoloji bildir"],
+       warn:"MgSO4 toksisitesi: derin tendon refleksi kaybı, solunum depresyonu, kardiyak arrest. Refleksleri düzenli kontrol et."},
+      {name:"Travmalı Hasta (ATLS)", badge:"kritik",
+       steps:["Primer değerlendirme: ABCDE","A: Hava yolu aç, C-spine koru","B: Solunum — gerilim pnömotoraks ekarte et, iğne dekompresyon","C: Dolaşım — kanama kontrolü, 2 geniş IV/IO, taze donmuş plazma + pRBC","D: Engellilik — GKS, pupil, lateralizasyon","E: Maruziyet — hipotermiyi önle (ısıtılmış battaniye)","FAST ultrasonografi (eğer mevcut)","Sekonder değerlendirme: baştan aşağı muayene"],
+       warn:"Travmada en sık ölüm nedeni: kontrol edilemeyen kanama. Permisif hipotansiyon uygula (SKB 80-90). Hayati tehdit varsa tanıyı tedaviyle eş zamanlı yönet."},
+      {name:"Crush Sendromu", badge:"dikkat",
+       steps:["Sıkışmadan kurtarılmadan önce IV erişim sağla","Kristaloid 1-1.5 L/saat IV — idrar çıkışı 200-300 mL/saat hedefle","İdrar rengi izle: miyoglobinüri → koyu kırmızı-kahverengi","Sodyum Bikarbonat eklenmesi düşünülebilir (idrar alkalizasyonu için)","Mannitol 1 g/kg IV (idrar çıkışını artır)","EKG — reperfüzyon hiperkalemisi dikkat","Hiperpotasemi tedavisi: Kalsiyum Klorür, Bikarbonat, Glukoz+İnsülin","Amputasyon/Fasiyotomi kararı uzmanla"],
+       warn:"Kurtarılmada ani reperfüzyon → hiperkalemi, asidoz, kardiyak arrest riski. Sıkışmadan kurtarma öncesi EKG ve monitorizasyon."},
+    ]}
+  },
+  child: {
+    "Kardiyak": {icon:"🫀", items:[
+      {name:"Çocuk Kardiyak Arrest", badge:"kritik",
+       steps:["CPR başla: 15:2 (2 kurtarıcı), tek kurtarıcı 30:2","Kompresyon derinliği: göğsün 1/3'ü (bebek 4 cm, çocuk 5 cm)","100-120/dk kompresyon","AED: çocuk elektrodu 1-8 yaş; >8 yaş yetişkin elektrodu","IV/IO: Adrenalin 0.01 mg/kg (1:10.000) her 3-5 dk","VF/pVT: 2 J/kg → 4 J/kg → 4 J/kg şeklinde eskalasyon","Amiodaron 5 mg/kg IV bolus (max 300 mg)","6H/6T nedenlerini ara"],
+       warn:"Çocuklarda arrest genellikle solunum kaynaklı — havayolu ve ventilasyon kritik. Mask-ventilasyon ile başla, IV erişim ikinci. Yenidoğanda NRP protokolü ayrıdır."},
+      {name:"Çocuk Bradikardi", badge:"dikkat",
+       steps:["Perfüzyon yeterliliğini değerlendir","Oksijen, havayolu açıklığı","En sık neden: Hipoksi — önce oksijenle!","Atropin 0.02 mg/kg IV (min 0.1 mg, max çocuk 0.5 mg)","KH <60/dk + yetersiz perfüzyon → CPR","Adrenalin 0.01 mg/kg IV/IO","Kardiyak köken şüphesinde: Transkutan pace"],
+       warn:"Çocuklarda en sık bradikardi nedeni hipoksidir. Her zaman önce hava yolunu aç ve oksijen ver."},
+    ]},
+    "Solunum": {icon:"🫁", items:[
+      {name:"Çocuk Astım (Ağır)", badge:"dikkat",
+       steps:["Oksijen: SpO2 ≥95%","Salbutamol 0.15 mg/kg nebulizasyon (max 5 mg), ilk saatte her 20 dk","İpratropium 0.25-0.5 mg nebulizasyon (ilk 3 doza ekle)","Prednizolon 1-2 mg/kg PO veya Metilprednizolon 1-2 mg/kg IV","Magnezyum Sülfat 25-75 mg/kg IV 20 dk'da (max 2.5 g)","Helioks %70/30 (mevcut ise)","Entübasyon gerekirse: Ketamin 1-2 mg/kg IV"],
+       warn:"Yoğun çalışma, sessiz akciğer, siyanoz → entübasyona geç etme. Oksigenasyon önce, entübasyon sonra."},
+      {name:"Krup (Orta-Ağır)", badge:"dikkat",
+       steps:["Çocuğu sakinleştir — ağlama ve ajitasyon havayolunu kötüleştirir","Deksametazon 0.6 mg/kg IM/IV/PO (max 10 mg)","Stridor + orta-ağır: Nebulize Adrenalin 0.5 mL/kg (1:1000, max 5 mL)","Oksijen (gerekirse, mümkünse maske ile değil blowby)","Adrenalin sonrası 2-4 saat gözlem — REBOUND ÖDEM!","Havayolu acil ekipmanı hazır bulundur"],
+       warn:"Nebulize adrenalin geçici etki gösterir, 2-4 saat sonra rebound ödem gelişebilir. Tam iyileşme olmadan asla taburcu etme."},
+      {name:"Epiglottit", badge:"kritik",
+       steps:["DOKUNMA, MUAYENE ETME — havayolu çökebilir!","Çocuğu sakin tut, oturur pozisyonda bırak","Oksijen: blowby yöntemi, maskeyi yüze dayama","Havayolu ekibini HEMEN çağır (anestezi/kulak burun boğaz)","Kontrollü ortamda (ameliyathane) entübasyon","Seftriakson 100 mg/kg IV (max 4 g)","Deksametazon 0.15-0.6 mg/kg IV"],
+       warn:"Epiglottit'te ağız veya boğazı muayene etme — ani total tıkanıklık yapabilir. Ameliyathane dışında zor havayolu girişiminden kaçın."},
+    ]},
+    "Nörolojik": {icon:"🧠", items:[
+      {name:"Çocuk Nöbet / Status", badge:"kritik",
+       steps:["Güvenli pozisyon, zamanı tut (>5 dk → status)","İntranasal Midazolam 0.2 mg/kg (max 10 mg) — IV erişim yoksa ilk tercih","IM Midazolam 0.2 mg/kg (max 10 mg)","IV/IO varsa: Lorazepam 0.1 mg/kg IV","Kan şekeri ölç — hipoglisemi ekarte et","Ateş varsa düşür (Parasetamol/ibuprofen veya soğuk uygulama)","2. basamak: Valproat 20-40 mg/kg IV 10 dk'da veya Levetirasetam 40-60 mg/kg IV","Entübasyon gerekirse: Midazolam + Ketamin RSI"],
+       warn:"Febril nöbet: >5 dk, fokal, postktal uzun → status şüphesi. Hipoglisemiyi mutlaka ekarte et. Tekrarlayan nöbet ise tedaviye geç."},
+    ]},
+    "Diğer": {icon:"🚑", items:[
+      {name:"Çocuk Anafilaksi", badge:"kritik",
+       steps:["Adrenalin 0.01 mg/kg IM (1:1000), max 0.5 mg — uyluk lateral yüzü","Şok pozisyonu (solunum sıkıntısı yoksa yatır + bacak kaldır)","Oksijen yüksek akım","IV/IO: Kristaloid 20 mL/kg bolus, tekrar değerlendir","5-15 dk'da Adrenalin tekrar (gerekirse)","Difenhidramin 1 mg/kg IV (max 50 mg)","Metilprednizolon 1-2 mg/kg IV","Bronkospazm: Salbutamol nebulizasyon","Refrakter: Adrenalin IV 0.01 mg/kg titrasyon"],
+       warn:"Adrenalin geciktirilmemeli — IM yol IV'e üstündür emilim hızı açısından. İkinci doz hazır beklet. Bifazik reaksiyon 4-8 saat içinde olabilir, gözlem zorunlu."},
+      {name:"Çocuk Hipoglisemi", badge:"dikkat",
+       steps:["KŞ <70 mg/dL (yenidoğan <47 mg/dL)","Bilinçli çocuk: oral glukoz 0.5-1 g/kg","IV erişim: Dekstroz %10 — 2-4 mL/kg bolus IV (yenidoğanda %10 tercih)","IV erişim yok: Glukagon — <5 yaş: 0.5 mg IM; ≥5 yaş: 1 mg IM","10-15 dk sonra tekrar ölç","İdame: Dekstroz %10 infüzyonu KŞ hedef 100-180 mg/dL","Hipoglisemi nedeni araştır"],
+       warn:"Neonatal hipoglisemide dekstroz %10 kullan — %50 sol. bebeklere kesinlikle verilmez. Uzun etkili ilaç kullanan çocuklarda tekrarlama riski."},
+      {name:"Çocuk Septik Şok", badge:"kritik",
+       steps:["ABC, oksijen yüksek akım","IV/IO erişim — kan kültürü (antibiyotik geciktirmemek için)","Kristaloid 20 mL/kg bolus → yanıtı değerlendir (max 60 mL/kg ilk saatte)","Ateş/hipotansiyon/taşikardi + enfeksiyon odağı → septik şok","Geniş spektrumlu antibiyotik 1 saat içinde: Seftriakson 100 mg/kg IV","Sıvıya yanıt yok: Noradrenalin 0.1 mcg/kg/dk IV","Adrenal yetmezlik şüphesi: Hidrokortizon 1-2 mg/kg IV","Laktat takibi, saatlik idrar çıkışı"],
+       warn:"Pediatrik septik şok'ta erken antibiyotik ve sıvı resüsitasyonu hayat kurtarır. Sıvı yüklenmesi (>60 mL/kg) pulmoner ödeme neden olabilir — akciğer muayenesini takip et."},
+      {name:"Yüksek Ateş / Febril Konvülsiyon", badge:"dikkat",
+       steps:["Vücut ısısını ölç: aksillar, timpanik, rektal","Parasetamol 15 mg/kg PO/rektal (max 1g)","İbuprofen 10 mg/kg PO (>3 ay, karaciğer yetmezliği yoksa)","Fiziksel soğutma: ılık kompres, hava akımı (buz yasak)","Febril konvülsiyon: yan yatır, güvenli pozisyon, >5 dk ise benzodiazepin","Menenjit ekarte et: boyun sertliği, ışık hassasiyeti, peteşi","Ciddi enfeksiyon odağı araştır: OM, pnömoni, İYE, menenjit"],
+       warn:"Febril konvülsiyon çoğunlukla benign — ama tekrarlayan, uzun veya fokal ise nörolojik muayene şart. 18 ay altında menenjit olasılığını düşün."},
+      {name:"Çocuk Yanık", badge:"dikkat",
+       steps:["Maruziyeti sonlandır","Soğuk su (15-25°C) 20 dk — hipotermiyi önle","Yanık alanı: Lund-Browder tablosu (çocuğa özel) — 9'lar kuralı yetişkine göre farklı","Parkland: 3 mL × kg × %TBSA (çocukta idame sıvısı ayrıca eklenir)","Analjezi: İntranasal Fentanil 1.5 mcg/kg veya Ketamin 0.3 mg/kg IV","IV/IO erişim — hipotermiye dikkat","Yüz veya üst hava yolu yanığı → erken entübasyon","Çocuklarda ≥%10-15 TBSA → yanık merkezine sevk"],
+       warn:"Çocuklarda ısı kaybı çok hızlı — önce hipotermiye karşı önlem al. Yüzey alanı hesaplaması yetişkinden farklı olduğu için Lund-Browder tablosu kullan."},
+    ]}
+  }
+};
+
+const QUIZ_QUESTIONS = [
+  {q:"Anafilakside ilk verilecek ilaç ve dozu nedir?",opts:["Difenhidramin 50 mg IV","Kortikosteroid 125 mg IV","Adrenalin 0.5 mg IM (1:1000)","Salbutamol nebülizasyon"],correct:2,explain:"Adrenalin 0.5 mg IM (1:1000) uyluk lateral yüzüne uygulanır. Gecikme ölüme yol açabilir. IM yol IV'e tercih edilir."},
+  {q:"Bifazik defibrilatörde VF/pVT için ilk şok enerjisi nedir?",opts:["50 J","100 J","120-200 J","360 J"],correct:2,explain:"Bifazik defibrilatörde 120-200 J, monofazik defibrilatörde 360 J önerilir. Çocukta ilk şok 2 J/kg'dır."},
+  {q:"Status epileptikusun tanımı nedir?",opts:["30 dk süren tek nöbet","5 dk süren nöbet veya bilinç açılmadan tekrarlayan nöbet","Bilinç kaybı olmaksızın aura","Postktal konfüzyon"],correct:1,explain:"5 dakikadan uzun süren tek nöbet veya bilinç açılmadan tekrarlayan nöbetler status epileptikus olarak tanımlanır ve acil tedavi gerektirir."},
+  {q:"Semptomatik bradikardide ilk verilecek ilaç?",opts:["Adrenalin 1 mg IV","Atropin 0.5 mg IV","Amiodaron 300 mg IV","Dopamin 10 mcg/kg/dk"],correct:1,explain:"Atropin 0.5 mg IV tercih edilir. 3-5 dk'da tekrar edilebilir, maksimum 3 mg. Yüksek dereceli AV blokta etkisiz olabilir."},
+  {q:"KOAH'ta hedef SpO2 aralığı?",opts:["100%",">97%","88-92%","80-85%"],correct:2,explain:"KOAH'ta yüksek oksijen hiperkapnik solunum yetmezliğini kötüleştirebilir. Hedef SpO2 88-92%'dir."},
+  {q:"Çocuk kardiyak arrestte Adrenalin dozu?",opts:["0.5 mg IV","1 mg IV","0.01 mg/kg IV/IO","0.1 mg/kg IV/IO"],correct:2,explain:"Çocuklarda Adrenalin dozu 0.01 mg/kg IV/IO (1:10.000 solüsyondan) her 3-5 dk. Maksimum 1 mg."},
+  {q:"Parkland formülü (yanık sıvı resüsitasyonu)?",opts:["4 mL × kg × %TBSA / 24 saat","2 mL × kg × yaş","3 mL × kg × %TBSA","10 mL × kg × %TBSA"],correct:0,explain:"Parkland formülü: 4 mL × kg × %TBSA = 24 saat toplam sıvı. İlk 8 saatte yarısını, kalan 16 saatte diğer yarısını ver."},
+  {q:"Zehir Danışma Hattı numarası?",opts:["155","112","114","182"],correct:2,explain:"Türkiye'de Zehir Danışma Hattı: 114. 7/24 hizmet vermektedir. Zehirlenme şüphesinde arayın."},
+  {q:"Krupda nebulize adrenalin sonrası neden gözlem gereklidir?",opts:["Hipertermi riski","Rebound ödem gelişebilir","Bronkospazm riski","Alerjik reaksiyon"],correct:1,explain:"Nebulize adrenalin geçici etki gösterir. 2-4 saat sonra rebound ödem gelişebilir. Tam iyileşme olmadan taburcu edilmemelidir."},
+  {q:"AKS'de STEMI için kapı-balon süresi hedefi?",opts:["30 dk","60 dk","90 dk","120 dk"],correct:2,explain:"Birincil PCI için kapı-balon süresi <90 dk hedeflenmektedir. Bu sürenin aşılması mortaliteyi artırır."},
+  {q:"Epiglottit şüphesinde YAPILMAMASI gereken nedir?",opts:["Oksijen uygulamak","Ağız ve boğazı muayene etmek","Çocuğu sakinleştirmek","Havayolu ekibini çağırmak"],correct:1,explain:"Epiglottit'te ağız ve boğaz muayenesi ani total havayolu tıkanıklığına yol açabilir. Muayene ancak kontrollü ortamda (ameliyathane) yapılmalıdır."},
+  {q:"Kardiyojenik şokta ilk tercih vazopressör?",opts:["Dopamin","Adrenalin","Noradrenalin","Vasopressin"],correct:2,explain:"Güncel kılavuzlar kardiyojenik şokta ilk tercih olarak Noradrenalin'i önermektedir. Dopamin karşılaştırmalı çalışmalarda daha fazla aritmi ile ilişkili bulunmuştur."},
+  {q:"RACE skoru kaç ve üzeri ise LVO yüksek olasılıklı?",opts:["2","3","5","7"],correct:2,explain:"RACE ≥5 büyük damar oklüzyonunu (LVO) yüksek olasılıkla gösterir ve EVT kapasiteli inme merkezine doğrudan sevkiyet kararı verilmelidir."},
+  {q:"Hipoglisemi tedavisinde IV erişim yoksa kullanılan ilaç?",opts:["Deksametazon","Glukagon 1 mg IM","İnsülin","Dekstroz %50 oral"],correct:1,explain:"IV erişim yoksa Glukagon 1 mg IM/SC uygulanır. Yetişkinlerde 1 mg, 5 yaş altı çocuklarda 0.5 mg dozunda kullanılır."},
+  {q:"Magnezyum Sülfat toksisitesinde antidot?",opts:["Flumazenil","Naloksan","Kalsiyum Glukonat 1 g IV","Atropin"],correct:2,explain:"MgSO4 toksisitesinde (derin tendon refleksi kaybı, solunum depresyonu) antidot Kalsiyum Glukonat 1 g IV yavaş verilir."},
+];
+
+// ===================== STATE =====================
+let currentGroup = null, currentCat = null;
+let cprInterval = null, cprSec = 120, cprCycles = 0, cprTotal = 0;
+let cprCompressing = true, cprPhaseCount = 0, cprNextRhythm = 120;
+let quizOrder = [], currentQ = 0, score = 0, answered = false;
+
+// ===================== TABS =====================
+function showTab(id) {
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('[data-tab="'+id+'"]').forEach(b => b.classList.add('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-section').style.display = 'none';
+  if (id === 'quiz' && quizOrder.length === 0) initQuiz();
+}
+
+// ===================== HOME / ALGOS =====================
+function renderCats() {
+  const icons = { Kardiyak:'🫀', Solunum:'🫁', Nörolojik:'🧠', Diğer:'🚑' };
+  ['adult','child'].forEach(group => {
+    const el = document.getElementById(group+'-cats');
+    Object.keys(ALGOS[group]).forEach(cat => {
+      const count = ALGOS[group][cat].items.length;
+      el.innerHTML += `<button class="cat-btn" onclick="showList('${group}','${cat}')">
+        <span class="cat-icon">${ALGOS[group][cat].icon}</span>
+        <span class="cat-name">${cat}</span>
+        <span class="cat-count">${count} protokol</span>
+      </button>`;
+    });
+  });
+}
+
+function showList(group, cat) {
+  currentGroup = group; currentCat = cat;
+  document.getElementById('view-cats').style.display = 'none';
+  document.getElementById('view-list').style.display = 'block';
+  document.getElementById('view-detail').style.display = 'none';
+  const el = document.getElementById('algo-list-items');
+  el.innerHTML = '';
+  ALGOS[group][cat].items.forEach((a, i) => {
+    el.innerHTML += `<div class="algo-item" onclick="showDetail(${i})">
+      <span class="algo-name">${a.name}</span>
+      <span class="algo-badge ${a.badge}">${a.badge === 'kritik' ? 'KRİTİK' : 'DİKKAT'}</span>
+      <span class="chevron">›</span>
+    </div>`;
+  });
+}
+
+function backToCats() {
+  document.getElementById('view-cats').style.display = 'block';
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'none';
+}
+
+function backToList() {
+  document.getElementById('view-list').style.display = 'block';
+  document.getElementById('view-detail').style.display = 'none';
+}
+
+function showDetail(idx) {
+  const a = ALGOS[currentGroup][currentCat].items[idx];
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'block';
+  let html = `<div class="detail-title">${a.name}</div>
+    <span class="detail-badge ${a.badge}">${a.badge === 'kritik' ? '⚠ KRİTİK' : '! DİKKAT'}</span>
+    <p class="steps-title">Müdahale Basamakları</p>
+    <ul class="step-list">${a.steps.map(s => `<li><span>${s}</span></li>`).join('')}</ul>`;
+  if (a.warn) html += `<div class="warn-box">${a.warn}</div>`;
+  if (a.info) html += `<div class="info-box">${a.info}</div>`;
+  document.getElementById('detail-content').innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+// ===================== SEARCH =====================
+function handleSearch(val) {
+  const searchSec = document.getElementById('search-section');
+  const resList = document.getElementById('search-results-list');
+  if (!val.trim()) {
+    searchSec.style.display = 'none';
+    return;
+  }
+  searchSec.style.display = 'block';
+  const q = val.toLowerCase();
+  let results = [];
+  ['adult','child'].forEach(group => {
+    Object.keys(ALGOS[group]).forEach(cat => {
+      ALGOS[group][cat].items.forEach((a, i) => {
+        if (a.name.toLowerCase().includes(q) || a.steps.join(' ').toLowerCase().includes(q)) {
+          results.push({ group, cat, idx: i, name: a.name, badge: a.badge });
+        }
+      });
+    });
+  });
+  if (results.length === 0) {
+    resList.innerHTML = '<div class="no-results">Sonuç bulunamadı.</div>';
+  } else {
+    resList.innerHTML = results.map(r =>
+      `<div class="algo-item" onclick="openSearchResult('${r.group}','${r.cat}',${r.idx})">
+        <span class="algo-name">${r.name}</span>
+        <span class="algo-badge ${r.badge}">${r.badge === 'kritik' ? 'KRİTİK' : 'DİKKAT'}</span>
+        <span class="chevron">›</span>
+      </div>`
+    ).join('');
+  }
+}
+
+function openSearchResult(group, cat, idx) {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-section').style.display = 'none';
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector('[data-tab="home"]').classList.add('active');
+  document.getElementById('tab-home').classList.add('active');
+  currentGroup = group; currentCat = cat;
+  document.getElementById('view-cats').style.display = 'none';
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-detail').style.display = 'block';
+  showDetail(idx);
+}
+
+// ===================== DOSE =====================
+const AGE_WEIGHTS = {1:10,2:12,3:14,4:16,5:18,6:20,7:22,8:25,9:28,10:32,12:38,14:50};
+function ageToWeight(age) {
+  if (!age) return;
+  const w = AGE_WEIGHTS[parseInt(age)] || 20;
+  document.getElementById('weight-slider').value = w;
+  calcDose(w);
+}
+
+function calcDose(kg) {
+  kg = parseFloat(kg);
+  document.getElementById('weight-val').textContent = kg + ' kg';
+  const drugs = [
+    { name:'Adrenalin (arrest)', val:(kg*0.01).toFixed(2), unit:'mg IV/IO (1:10.000)' },
+    { name:'Adrenalin (anafilaksi IM)', val:Math.min(0.5,kg*0.01).toFixed(2), unit:'mg IM (1:1000)' },
+    { name:'Atropin', val:Math.max(0.1,Math.min(0.5,kg*0.02)).toFixed(2), unit:'mg IV' },
+    { name:'Amiodaron', val:(kg*5).toFixed(0), unit:'mg IV bolus' },
+    { name:'Adenozin', val:Math.min(6,kg*0.1).toFixed(1), unit:'mg IV hızlı' },
+    { name:'Midazolam IN/IM', val:Math.min(10,kg*0.2).toFixed(1), unit:'mg' },
+    { name:'Deksametazon', val:Math.min(10,kg*0.6).toFixed(1), unit:'mg IV/IM' },
+    { name:'Salbutamol nebül', val:Math.min(5,kg*0.15).toFixed(2), unit:'mg nebülizasyon' },
+    { name:'Dekstroz %10 bolus', val:(kg*2).toFixed(0), unit:'mL IV' },
+    { name:'Kristaloid bolus', val:(kg*20).toFixed(0), unit:'mL IV hızlı' },
+    { name:'Glukagon', val:kg<25?'0.5':'1.0', unit:'mg IM' },
+    { name:'Morfin (analjezi)', val:(kg*0.1).toFixed(1), unit:'mg IV titrasyon' },
+    { name:'Ketamin (sedasyon)', val:(kg*1.5).toFixed(0), unit:'mg IV' },
+    { name:'Seftriakson', val:Math.min(4000,kg*100).toFixed(0), unit:'mg IV' },
+    { name:'MgSO4 (astım)', val:Math.min(2500,kg*50).toFixed(0), unit:'mg IV 20 dk\'da' },
+    { name:'Levetirasetam', val:Math.min(3000,kg*40).toFixed(0), unit:'mg IV' },
+  ];
+  document.getElementById('dose-grid').innerHTML = drugs.map(d =>
+    `<div class="dose-item"><div class="d-name">${d.name}</div><div class="d-val">${d.val}</div><div class="d-unit">${d.unit}</div></div>`
+  ).join('');
+}
+
+// ===================== CPR =====================
+function cprFmt(s) { return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60; }
+
+function cprStart() {
+  if (cprInterval) return;
+  cprInterval = setInterval(() => {
+    cprSec--;
+    cprTotal++;
+    cprPhaseCount++;
+    cprNextRhythm--;
+    // 30:2 cycle: 18s compress (~30 compressions at 100/min), 4s ventilate
+    if (cprCompressing && cprPhaseCount >= 18) { cprCompressing = false; cprPhaseCount = 0; }
+    else if (!cprCompressing && cprPhaseCount >= 4) { cprCompressing = true; cprPhaseCount = 0; cprCycles++; }
+    if (cprNextRhythm <= 0) { cprNextRhythm = 120; }
+    const timerEl = document.getElementById('cpr-timer');
+    timerEl.textContent = cprFmt(cprSec < 0 ? 0 : cprSec);
+    timerEl.classList.toggle('pulse', cprCompressing);
+    const badge = document.getElementById('cpr-phase-badge');
+    if (cprCompressing) { badge.textContent = '⬇ KOMPRESYONlar — 30 BASI'; badge.className = 'cpr-phase-badge compress'; }
+    else { badge.textContent = '💨 VENTİLASYON — 2 SOLUNUM'; badge.className = 'cpr-phase-badge ventilate'; }
+    document.getElementById('cpr-cycles').textContent = cprCycles;
+    document.getElementById('cpr-total').textContent = cprFmt(cprTotal);
+    document.getElementById('cpr-next').textContent = cprFmt(cprNextRhythm);
+    if (cprSec <= 0) cprSec = 0;
+  }, 1000);
+}
+
+function cprStop() { clearInterval(cprInterval); cprInterval = null; }
+function cprReset() {
+  cprStop(); cprSec = 120; cprCycles = 0; cprTotal = 0;
+  cprCompressing = true; cprPhaseCount = 0; cprNextRhythm = 120;
+  document.getElementById('cpr-timer').textContent = '02:00';
+  document.getElementById('cpr-timer').classList.remove('pulse');
+  document.getElementById('cpr-phase-badge').textContent = '⬇ KOMPRESYONlar — 30 BASI';
+  document.getElementById('cpr-phase-badge').className = 'cpr-phase-badge compress';
+  document.getElementById('cpr-cycles').textContent = '0';
+  document.getElementById('cpr-total').textContent = '0:00';
+  document.getElementById('cpr-next').textContent = '2:00';
+}
+
+// ===================== EVT =====================
+function showEvt(id) {
+  document.querySelectorAll('.evt-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.evt-sec').forEach(s => s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('evt-'+id).classList.add('active');
+}
+
+function calcRace() {
+  const ids = ['r1','r2','r3','r4','r5'];
+  let total = 0;
+  ids.forEach(id => {
+    const v = parseInt(document.getElementById(id).value);
+    document.getElementById(id+'v').textContent = v;
+    total += v;
+  });
+  document.getElementById('race-num').textContent = total;
+  const label = document.getElementById('race-label');
+  if (total >= 5) { label.textContent = 'LVO yüksek olasılık → EVT merkezi bildir!'; label.style.color = '#FF6B7A'; }
+  else if (total >= 3) { label.textContent = 'Orta olasılık → inme merkezi bildir'; label.style.color = '#F5A623'; }
+  else { label.textContent = 'LVO düşük olasılık'; label.style.color = 'var(--text3)'; }
+}
+
+// ===================== QUIZ =====================
+function initQuiz() {
+  quizOrder = [...QUIZ_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 10);
+  currentQ = 0; score = 0; answered = false;
+  document.getElementById('quiz-result').style.display = 'none';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizOrder[currentQ];
+  const pct = Math.round(((currentQ + 1) / quizOrder.length) * 100);
+  document.getElementById('quiz-prog').style.width = pct + '%';
+  document.getElementById('quiz-num').textContent = 'Soru ' + (currentQ + 1) + ' / ' + quizOrder.length;
+  document.getElementById('quiz-score-live').textContent = score + ' doğru';
+  document.getElementById('quiz-q').textContent = q.q;
+  document.getElementById('quiz-explain').style.display = 'none';
+  document.getElementById('quiz-next').style.display = 'none';
+  answered = false;
+  document.getElementById('quiz-opts').innerHTML = q.opts.map((o, i) =>
+    `<button class="quiz-opt" onclick="answerQ(${i})">${o}</button>`
+  ).join('');
+}
+
+function answerQ(i) {
+  if (answered) return;
+  answered = true;
+  const q = quizOrder[currentQ];
+  const btns = document.querySelectorAll('.quiz-opt');
+  btns.forEach((b, j) => {
+    b.disabled = true;
+    if (j === q.correct) b.classList.add('correct');
+    else if (j === i) b.classList.add('wrong');
+  });
+  if (i === q.correct) score++;
+  document.getElementById('quiz-score-live').textContent = score + ' doğru';
+  document.getElementById('quiz-explain').textContent = q.explain;
+  document.getElementById('quiz-explain').style.display = 'block';
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.style.display = 'block';
+  nextBtn.textContent = currentQ + 1 < quizOrder.length ? 'Sonraki Soru →' : 'Sonuçları Gör';
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= quizOrder.length) {
+    const pct = Math.round(score / quizOrder.length * 100);
+    document.getElementById('quiz-opts').innerHTML = '';
+    document.getElementById('quiz-q').textContent = '';
+    document.getElementById('quiz-explain').style.display = 'none';
+    document.getElementById('quiz-next').style.display = 'none';
+    document.getElementById('qr-score-num').textContent = pct + '%';
+    document.getElementById('qr-label').textContent = pct >= 80 ? 'Mükemmel!' : pct >= 60 ? 'İyi iş!' : 'Tekrar çalış!';
+    document.getElementById('qr-sub').textContent = score + ' / ' + quizOrder.length + ' doğru cevap';
+    document.getElementById('quiz-result').style.display = 'block';
+    document.getElementById('quiz-prog').style.width = '100%';
+    return;
+  }
+  renderQuestion();
+}
+
+// ===================== INIT =====================
+renderCats();
+calcDose(20);
+</script>
+</body>
+</html>
