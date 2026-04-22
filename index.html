@@ -1,127 +1,831 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ASOS ULTRA V4</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="description" content="112 Acil Müdahale Asistanı — Hastane öncesi bakım protokolleri">
+<title>112 Acil Müdahale Asistanı | KKM + SAKOM Entegre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #D0021B;
+  --red-dark: #A50015;
+  --red-light: #FFEEF0;
+  --red-mid: #FF3347;
+  --navy: #0D1B2A;
+  --navy2: #162236;
+  --slate: #2C3E50;
+  --muted: #6B7C93;
+  --border: rgba(255,255,255,0.08);
+  --border-light: rgba(0,0,0,0.08);
+  --card-bg: #1A2738;
+  --card-bg2: #1E2D40;
+  --text: #F0F4F8;
+  --text2: #A8B8CC;
+  --text3: #6B7C93;
+  --green: #00C48C;
+  --amber: #F5A623;
+  --blue: #4A90E2;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+}
 
-    <style>
-        :root { --red: #ff4757; --bg: #0a0e14; --card: #151a24; --border: #2f3542; --blue: #00d2ff; --green: #2ed573; --text: #ced4da; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        /* ÜST PANEL */
-        header { padding: 15px; background: var(--card); border-bottom: 2px solid var(--red); display: flex; justify-content: space-between; align-items: center; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .online-dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
-        .offline-dot { background: var(--red); box-shadow: 0 0 10px var(--red); }
+body {
+  font-family: var(--sans);
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-        /* HARİTA KISITLI ALAN */
-        #map { height: 35vh; width: 100%; border-bottom: 1px solid var(--border); }
+/* HEADER */
+.app-header {
+  background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
 
-        /* ANA İŞLEM ALANI (SCROLL OLABİLİR) */
-        main { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; }
-        
-        .section-title { font-family: 'Rajdhani'; color: var(--blue); font-size: 14px; margin-bottom: 12px; font-weight: 700; text-transform: uppercase; }
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
 
-        /* ULTRA FORM TASARIMI */
-        .vaka-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .input-group { margin-bottom: 10px; }
-        .input-group label { display: block; font-size: 10px; color: #888; margin-bottom: 4px; }
-        .u-input { width: 100%; background: #000; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; font-size: 14px; }
-        
-        /* HAYATİ BULGULAR (GRID) */
-        .vital-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        .vital-box { background: #000; border: 1px solid var(--border); padding: 8px; border-radius: 8px; text-align: center; }
-        .vital-box input { width: 100%; background: transparent; border: none; color: var(--green); text-align: center; font-size: 18px; font-family: 'Rajdhani'; font-weight: 700; }
+.logo-badge {
+  background: var(--red);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
 
-        /* ALT NAVİGASYON (FIXED) */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; border-top: 1px solid var(--border); padding: 10px; gap: 10px; }
-        .nav-btn { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 12px; cursor: pointer; color: white; transition: 0.2s; }
-        .btn-blue { background: var(--blue); }
-        .btn-green { background: var(--green); }
-        .btn-red { background: var(--red); }
-        .nav-btn:active { transform: scale(0.95); opacity: 0.8; }
-    </style>
+.header-titles { flex: 1; min-width: 0; }
+.header-titles h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-titles p {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.header-search {
+  padding: 0 16px 12px;
+  position: relative;
+}
+.header-search input {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 14px 9px 36px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  outline: none;
+  transition: border-color .2s;
+}
+.header-search input:focus { border-color: rgba(208,2,27,0.5); }
+.header-search input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* NAV TABS */
+.nav-tabs {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 4px;
+  padding: 0 16px 12px;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.nav-tab .tab-icon { font-size: 18px; line-height: 1; }
+.nav-tab.active {
+  background: var(--red);
+  color: #fff;
+}
+.nav-tab:not(.active):hover { background: rgba(255,255,255,0.06); color: var(--text2); }
+
+/* MAIN */
+main { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.card-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.card-icon.red { background: rgba(208,2,27,0.2); }
+.card-icon.amber { background: rgba(245,166,35,0.2); }
+.card-icon.green { background: rgba(0,196,140,0.2); }
+.card-icon.blue { background: rgba(74,144,226,0.2); }
+
+.card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.card-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+.card-body { padding: 14px 16px; }
+
+/* CATEGORY GRID */
+.cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cat-btn {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all .2s;
+  color: var(--text);
+}
+.cat-btn:hover, .cat-btn:active { border-color: var(--red); background: rgba(208,2,27,0.08); }
+.cat-btn .cat-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+.cat-btn .cat-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.cat-btn .cat-count { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  margin-top: 4px;
+  font-family: var(--mono);
+}
+
+/* ALGO LIST */
+.algo-list { display: flex; flex-direction: column; gap: 8px; }
+
+.algo-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .2s;
+}
+.algo-item:hover, .algo-item:active { border-color: var(--red); }
+.algo-item .algo-name { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; }
+.algo-item .algo-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+.algo-item .algo-badge.kritik { background: rgba(208,2,27,0.2); color: #FF6B7A; }
+.algo-item .algo-badge.dikkat { background: rgba(245,166,35,0.2); color: #F5A623; }
+.algo-item .chevron { color: var(--text3); font-size: 16px; }
+
+/* BACK BTN */
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: var(--text2);
+  font-size: 13px;
+  font-family: var(--sans);
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: all .2s;
+}
+.back-btn:hover { border-color: rgba(255,255,255,0.2); }
+
+/* DETAIL */
+.detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.detail-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  font-family: var(--mono);
+}
+.detail-badge.kritik { background: rgba(208,2,27,0.2); color: #FF6B7A; border: 1px solid rgba(208,2,27,0.3); }
+.detail-badge.dikkat { background: rgba(245,166,35,0.2); color: #F5A623; border: 1px solid rgba(245,166,35,0.3); }
+
+.steps-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: var(--mono);
+}
+
+.step-list { list-style: none; counter-reset: steps; }
+.step-list li {
+  counter-increment: steps;
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.55;
+}
+.step-list li:last-child { border-bottom: none; }
+.step-list li::before {
+  content: counter(steps);
+  min-width: 26px; height: 26px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--mono);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* YENİ: SAKOM ve KKM Özel Kutuları */
+.sakom-box {
+  background: rgba(208,2,27,0.15);
+  border-left: 4px solid var(--red);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #FF9EAA;
+  line-height: 1.55;
+  margin-top: 14px;
+}
+.sakom-box::before { content: '📢 SAKOM ARANMALI: '; font-weight: 700; color: #FF6B7A; }
+
+.kkm-box {
+  background: rgba(74,144,226,0.1);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #7EB8FF;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+.kkm-box::before { content: '🎙️ KKM NOTU: '; font-weight: 700; }
+
+.warn-box {
+  background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #F5A623;
+  line-height: 1.55;
+  margin-top: 14px;
+}
+.warn-box::before { content: '⚠ '; font-weight: 700; }
+
+.danger-box {
+  background: rgba(208,2,27,0.1);
+  border: 1px solid rgba(208,2,27,0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #FF6B7A;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+
+.info-box {
+  background: rgba(74,144,226,0.1);
+  border: 1px solid rgba(74,144,226,0.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #7EB8FF;
+  line-height: 1.55;
+  margin-top: 10px;
+}
+
+/* DOSE */
+.dose-weight-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dose-weight-row label { font-size: 13px; color: var(--text3); white-space: nowrap; }
+.dose-weight-row input[type=range] { flex: 1; accent-color: var(--red); }
+.dose-weight-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--red-mid);
+  min-width: 60px;
+  text-align: right;
+}
+
+.age-select {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  margin-bottom: 14px;
+  outline: none;
+}
+.age-select option { background: var(--navy2); }
+
+.dose-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.dose-item {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.dose-item .d-name { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+.dose-item .d-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1;
+}
+.dose-item .d-unit { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+
+/* CPR */
+.cpr-display {
+  text-align: center;
+  padding: 24px 16px;
+}
+.cpr-timer {
+  font-family: var(--mono);
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 4px;
+  line-height: 1;
+  margin-bottom: 8px;
+  transition: color .3s;
+}
+.cpr-timer.pulse { color: var(--red-mid); }
+.cpr-phase {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 20px;
+  font-family: var(--mono);
+  letter-spacing: 0.5px;
+}
+.cpr-phase-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--mono);
+  margin-bottom: 20px;
+  transition: all .3s;
+}
+.cpr-phase-badge.compress { background: rgba(208,2,27,0.2); color: #FF6B7A; border: 1px solid rgba(208,2,27,0.3); }
+.cpr-phase-badge.ventilate { background: rgba(0,196,140,0.2); color: #00C48C; border: 1px solid rgba(0,196,140,0.3); }
+
+.cpr-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+.cpr-btn {
+  padding: 12px 22px;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cpr-btn.start { background: var(--red); color: #fff; }
+.cpr-btn.start:hover { background: var(--red-dark); }
+.cpr-btn.stop { background: rgba(255,255,255,0.08); color: var(--text2); border: 1px solid var(--border); }
+.cpr-btn.reset { background: rgba(255,255,255,0.04); color: var(--text3); border: 1px solid var(--border); }
+
+.cpr-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+.cpr-stat {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+}
+.cpr-stat .sv { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--text); }
+.cpr-stat .sl { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* QUIZ */
+.quiz-progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.quiz-progress-fill {
+  height: 3px;
+  background: var(--red);
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+.quiz-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 14px;
+  font-family: var(--mono);
+}
+.quiz-q {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.quiz-opts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.quiz-opt {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  font-size: 14px;
+  color: var(--text2);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all .2s;
+  line-height: 1.4;
+}
+.quiz-opt:not(:disabled):hover { border-color: rgba(255,255,255,0.2); }
+.quiz-opt.correct { background: rgba(0,196,140,0.1); border-color: rgba(0,196,140,0.4); color: #00C48C; }
+.quiz-opt.wrong { background: rgba(208,2,27,0.1); border-color: rgba(208,2,27,0.3); color: #FF6B7A; }
+
+.quiz-explain {
+  background: rgba(74,144,226,0.1);
+  border: 1px solid rgba(74,144,226,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #7EB8FF;
+  line-height: 1.55;
+  margin-bottom: 12px;
+  display: none;
+}
+.quiz-next-btn {
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+  display: none;
+  transition: background .2s;
+}
+.quiz-next-btn:hover { background: var(--red-dark); }
+
+.quiz-result {
+  text-align: center;
+  padding: 20px 0;
+}
+.quiz-result .qr-score {
+  font-family: var(--mono);
+  font-size: 52px;
+  font-weight: 700;
+  color: var(--red-mid);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.quiz-result .qr-label { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.quiz-result .qr-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+.quiz-restart {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+/* EVT */
+.evt-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.evt-tab {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 12px;
+  font-family: var(--sans);
+  cursor: pointer;
+  transition: all .2s;
+}
+.evt-tab.active { background: rgba(74,144,226,0.2); color: #7EB8FF; border-color: rgba(74,144,226,0.4); }
+
+.evt-sec { display: none; }
+.evt-sec.active { display: block; }
+
+.crit-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.crit-item:last-child { border-bottom: none; }
+.crit-item .ci-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.crit-item.yes .ci-text { color: #00C48C; }
+.crit-item.no .ci-text { color: #FF6B7A; }
+
+.race-score-display {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-top: 14px;
+  text-align: center;
+}
+.race-score-num {
+  font-family: var(--mono);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.race-score-label { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+.race-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.race-row:last-child { border-bottom: none; }
+.race-label { flex: 1; font-size: 13px; color: var(--text2); }
+.race-row input[type=range] { width: 80px; accent-color: var(--blue); }
+.race-val { font-family: var(--mono); font-size: 14px; color: var(--text); min-width: 20px; text-align: center; }
+
+.tl-item {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 16px;
+  position: relative;
+}
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot-col { display: flex; flex-direction: column; align-items: center; }
+.tl-circle {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--mono);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.tl-line { width: 2px; flex: 1; background: var(--border); min-height: 16px; }
+.tl-content { padding-top: 4px; }
+.tl-time { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 2px; }
+.tl-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.tl-desc { font-size: 12px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
+
+/* METRICS ROW */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.metric-box {
+  background: var(--card-bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  text-align: center;
+}
+.metric-box .mv {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--red-mid);
+  line-height: 1;
+}
+.metric-box .ml { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.3; }
+
+/* SEARCH RESULTS */
+.search-results { display: none; }
+.no-results { text-align: center; padding: 32px; color: var(--text3); font-size: 14px; }
+
+/* FOOTER */
+.app-footer {
+  text-align: center;
+  padding: 20px 16px 32px;
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.app-footer strong { color: var(--text2); }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.section.active { animation: fadeIn .2s ease; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+</style>
 </head>
 <body>
 
-    <header>
-        <div style="font-family: 'Rajdhani'; font-weight: 700;">ASOS <span style="color:var(--red)">ULTRA</span></div>
-        <div id="net-status"><span class="status-dot online-dot"></span><small>SİSTEM AKTİF</small></div>
-    </header>
-
-    <div id="map"></div>
-
-    <main>
-        <div class="section-title">🩺 HASTA VE VAKA BİLGİLERİ</div>
-        <div class="vaka-card">
-            <div class="input-group">
-                <label>AD SOYAD / PROTOKOL</label>
-                <input type="text" class="u-input" id="p_name" placeholder="Vaka Bilgisi Giriniz...">
-            </div>
-            
-            <div class="section-title" style="font-size: 11px; margin-top: 15px;">📊 VİTAL BULGULAR</div>
-            <div class="vital-grid">
-                <div class="vital-box"><label>TA</label><input type="text" placeholder="12/8"></div>
-                <div class="vital-box"><label>NABIZ</label><input type="number" placeholder="80"></div>
-                <div class="vital-box"><label>SPO2</label><input type="number" placeholder="98"></div>
-            </div>
-        </div>
-
-        <div class="section-title">📝 TIBBİ MÜDAHALE NOTLARI</div>
-        <textarea class="u-input" style="height: 80px; resize: none;" placeholder="Uygulanan tedavi ve ilaçlar..."></textarea>
-    </main>
-
-    <div class="bottom-nav">
-        <button class="nav-btn btn-blue" onclick="saveOffline()">💾 TASLAK KAYDET</button>
-        <button class="nav-btn btn-green" onclick="sendToCenter()">🚀 MERKEZE GÖNDER</button>
+<header class="app-header">
+  <div class="header-top">
+    <div class="logo-badge">112</div>
+    <div class="header-titles">
+      <h1>Acil Müdahale Asistanı | KKM + SAKOM</h1>
+      <p>Hastane öncesi bakım protokolleri & SAKOM bildirim kriterleri</p>
     </div>
+  </div>
+  <div class="header-search">
+    <span class="search-icon">🔍</span>
+    <input type="search" id="search-input" placeholder="Algoritma ara... (AKS, Arrest, Anafilaksi...)" oninput="handleSearch(this.value)">
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('home')" data-tab="home">
+      <span class="tab-icon">🏥</span>Algoritmalar
+    </button>
+    <button class="nav-tab" onclick="showTab('dose')" data-tab="dose">
+      <span class="tab-icon">💉</span>Doz Hesap
+    </button>
+    <button class="nav-tab" onclick="showTab('cpr')" data-tab="cpr">
+      <span class="tab-icon">🫀</span>CPR
+    </button>
+    <button class="nav-tab" onclick="showTab('evt')" data-tab="evt">
+      <span class="tab-icon">🧠</span>EVT / İnme
+    </button>
+    <button class="nav-tab" onclick="showTab('quiz')" data-tab="quiz">
+      <span class="tab-icon">🎯</span>Quiz
+    </button>
+  </nav>
+</header>
 
-    <script>
-        // --- HARİTA AYARLARI ---
-        var map = L.map('map', { zoomControl: false }).setView([41.7351, 27.2243], 15);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-        var marker = L.marker([41.7351, 27.2243]).addTo(map);
+<main>
 
-        // --- OFFLINE KAYIT MEKANİZMASI ---
-        function saveOffline() {
-            const data = {
-                isim: document.getElementById('p_name').value,
-                zaman: new Date().toISOString(),
-                durum: 'Taslak'
-            };
-            localStorage.setItem('last_vaka', JSON.stringify(data));
-            alert("Vaka telefon hafızasına kaydedildi (İnternetsiz mod).");
-        }
+<!-- SEARCH RESULTS -->
+<div class="search-results" id="search-section">
+  <div id="search-results-list" class="algo-list"></div>
+</div>
 
-        // --- MERKEZE GÖNDER (SİMÜLASYON) ---
-        function sendToCenter() {
-            if (!navigator.onLine) {
-                alert("İnternet yok! Veri, bağlantı gelince otomatik gönderilecek.");
-                return;
-            }
-            alert("Veriler Kırklareli KKM merkezine başarıyla aktarıldı.");
-        }
+<!-- HOME -->
+<div class="section active" id="tab-home">
+  <div id="view-cats">
+    <p class="section-label">Yetişkin Protokolleri</p>
+    <div class="cat-grid" id="adult-cats"></div>
+    <p class="section-label">Çocuk Protokolleri</p>
+    <div class="cat-grid" id="child-cats"></div>
+  </div>
 
-        // --- NETWORK TAKİBİ ---
-        window.addEventListener('offline', () => {
-            document.getElementById('net-status').innerHTML = '<span class="status-dot offline-dot"></span><small>ÇEVRİMDIŞI MOD</small>';
-        });
-        window.addEventListener('online', () => {
-            document.getElementById('net-status').innerHTML = '<span class="status-dot online-dot"></span><small>SİSTEM AKTİF</small>';
-        });
+  <div id="view-list" style="display:none">
+    <button class="back-btn" onclick="backToCats()">← Kategoriler</button>
+    <div class="algo-list" id="algo-list-items"></div>
+  </div>
 
-        // --- SESLİ KOMUT BAŞLATMA ---
-        window.onload = () => {
-            const msg = new SpeechSynthesisUtterance("ASOS Ultra Mobil Sistemi Hazır. İyi nöbetler.");
-            msg.lang = "tr-TR";
-            window.speechSynthesis.speak(msg);
-        };
-    </script>
-</body>
-</html>
+  <div id="view-detail" style="display:none">
+    <button class="back-btn" onclick="backToList()">← Geri</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- DOSE -->
+<div class="section" id="tab-dose">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon amber">👶</div>
+      <div>
+        <div class="card-title">Çocuk Doz Hesaplama</div>
+        <div class="card-sub">Kilo bazlı kritik ilaç dozları</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="dose-weight-row">
+        <label>Kilo</label>
+        <input type="range" min="1" max="80" value="20" step="0.5" id="weight-slider" oninput="calcDose(this.value)">
+        <span class="dose-weight-val" id="weight-val">20 kg</span>
+      </div>
+      <select class="age-select" onchange="ageToWeight(this.value)">
+        <option value="">Yaşa göre kilo tahmini...</option>
+        <option value="1">1 yaş — ~10 kg</option>
+        <option value="2">2 yaş — ~12 kg</option>
+        <option value="3">3 yaş — ~14 kg</option>
+        <option value="4">4 yaş — ~16 kg</option>
+        <option value="5">5 yaş — ~18 kg</option>
+        <option value="6">6 yaş — ~20 kg</option>
+        <
