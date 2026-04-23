@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>112 Kırklareli | KKM + Saha | AHA/ERC 2025</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="apple-touch-icon" href="https://fethipolat.github.io/KIRKLAREL-112-UYGULAMA-ALGOR-TAMASI/logo.png">
-<meta name="apple-mobile-web-app-title" content="KIRKLARELİ 112">
-<style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KIRKLARELİ 112">
+    
+    <link rel="apple-touch-icon" href="https://fethip.github.io/112-/112.png?v=12">
+    <link rel="icon" type="image/png" href="https://fethip.github.io/112-/112.png">
+    
+    <title>112 Kırklareli | KKM + Saha | AHA/ERC 2025</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
   --red:#dc2626;--red2:#991b1b;--blue:#2563eb;--green:#16a34a;
@@ -53,6 +58,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .role-glow{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:80px;height:40px;border-radius:50%;filter:blur(15px);pointer-events:none;}
 .role-btn.kkm .role-glow{background:var(--blue);}
 .role-btn.saha .role-glow{background:var(--green);}
+
+/* ===== LOGIN ===== */
+#loginBox{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,rgba(6,12,26,0) 0%,rgba(6,12,26,0.98) 18%,#060c1a 100%);padding:32px 28px 40px;display:none;flex-direction:column;gap:10px;}
+#loginBox.show{display:flex;}
+.login-title{font-size:0.75rem;font-weight:800;color:var(--text);text-align:center;margin-bottom:4px;letter-spacing:1px;}
+.login-sub{font-size:0.55rem;color:var(--muted);text-align:center;margin-bottom:8px;}
+.login-input-wrap{position:relative;}
+.login-input-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.75rem;}
+.login-input{width:100%;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:14px;padding:11px 12px 11px 34px;color:var(--text);font-size:0.7rem;outline:none;transition:border 0.2s;}
+.login-input:focus{border-color:var(--accent);}
+.login-input::placeholder{color:var(--muted);}
+.login-btn{background:linear-gradient(135deg,var(--red),var(--red2));border:none;padding:13px;width:100%;border-radius:30px;color:white;font-weight:800;cursor:pointer;font-size:0.78rem;letter-spacing:1px;margin-top:4px;}
+.login-btn:active{transform:scale(0.97);}
+.login-err{color:#f87171;font-size:0.6rem;text-align:center;display:none;}
+.login-err.show{display:block;}
 
 /* ===== APP ===== */
 .app{display:none;height:100vh;overflow:hidden;flex-direction:column;}
@@ -265,7 +285,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="splash-title">112 KIRKLARELİ</div>
   <div class="splash-sub">KKM OPERASYON + SAHA EKİBİ</div>
   <div class="splash-aha">⚕️ AHA / ERC 2025 KILAVUZLARI</div>
-  <div class="role-buttons">
+
+  <!-- LOGIN KUTUSU -->
+  <div id="loginBox" class="show">
+    <div class="login-title">🔐 GİRİŞ</div>
+    <div class="login-sub">Sisteme erişmek için kimlik doğrulama gereklidir</div>
+    <div class="login-input-wrap">
+      <i class="fas fa-user"></i>
+      <input class="login-input" id="loginUser" type="text" placeholder="Kullanıcı adı" autocomplete="off">
+    </div>
+    <div class="login-input-wrap">
+      <i class="fas fa-lock"></i>
+      <input class="login-input" id="loginPass" type="password" placeholder="Şifre" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err" id="loginErr">❌ Kullanıcı adı veya şifre hatalı!</div>
+    <button class="login-btn" onclick="doLogin()"><i class="fas fa-right-to-bracket"></i> &nbsp;GİRİŞ YAP</button>
+  </div>
+
+  <!-- ROL SEÇİMİ (giriş sonrası) -->
+  <div class="role-buttons" id="roleBox" style="display:none;">
     <div class="role-btn kkm" onclick="selectRole('kkm')">
       <div class="role-glow"></div>
       <i class="fas fa-headset"></i>
@@ -278,7 +316,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <h3>SAHA EKİBİ</h3>
       <p>Ambulans Personeli<br>Algoritmalar & Dozlar</p>
     </div>
-  </div>
+  </div><!-- /role-buttons -->
 </div>
 
 <!-- ============ KKM ARAYÜZÜ ============ -->
@@ -490,10 +528,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <!-- VT -->
       <div class="rhythm-card" onclick="showAlgo('vt')">
         <div class="rhythm-header"><span class="rhythm-name">⚡ VENTRİKÜLER TAŞİKARDİ (VT)</span><span class="rhythm-label lbl-shock">⚡ KARDİYOVERSİYON</span></div>
-        <div class="ecg-wrap"><svg class="ecg-line" viewBox="0 0 800 40" preserveAspectRatio="none" style="width:200%;animation:ecgScroll 1.8s linear infinite;">
-          <path class="ecg-path" stroke="#f97316" d="M0,20 L15,20 L18,2 L22,38 L26,20 L55,20 L58,2 L62,38 L66,20 L95,20 L98,2 L102,38 L106,20 L135,20 L138,2 L142,38 L146,20 L175,20 L178,2 L182,38 L186,20 L215,20 L218,2 L222,38 L226,20 L255,20 L258,2 L262,38 L266,20 L295,20 L298,2 L302,38 L306,20 L335,20 L338,2 L342,38 L346,20 L375,20 L378,2 L382,38 L386,20 L415,20 L418,2 L422,38 L426,20 L455,20 L458,2 L462,38 L466,20 L495,20 L498,2 L502,38 L506,20 L535,20 L538,2 L542,38 L546,20 L575,20 L578,2 L582,38 L586,20 L615,20 L618,2 L622,38 L626,20 L655,20 L658,2 L662,38 L666,20 L695,20 L698,2 L702,38 L706,20 L735,20 L738,2 L742,38 L746,20 L775,20 L778,2 L782,38 L786,20"/>
+        <div class="ecg-wrap"><svg class="ecg-line" viewBox="0 0 800 40" preserveAspectRatio="none" style="width:200%;animation:ecgScroll 2.4s linear infinite;">
+          <!-- Gerçekçi VT: Geniş, monofazik, düzenli sinüzoidal dalgalar ~150/dk, QRS genişliği artmış -->
+          <path class="ecg-path" stroke="#f97316" stroke-width="1.8" fill="none"
+            d="M0,20
+               L3,20 L5,19 L7,16 L9,10 L11,4 L13,2 L15,3 L17,6 L19,11 L21,17 L23,22 L25,28 L27,34 L29,37 L31,38 L33,37 L35,33 L37,28 L39,23 L41,20
+               L44,20 L46,19 L48,16 L50,10 L52,4 L54,2 L56,3 L58,6 L60,11 L62,17 L64,22 L66,28 L68,34 L70,37 L72,38 L74,37 L76,33 L78,28 L80,23 L82,20
+               L85,20 L87,19 L89,16 L91,10 L93,4 L95,2 L97,3 L99,6 L101,11 L103,17 L105,22 L107,28 L109,34 L111,37 L113,38 L115,37 L117,33 L119,28 L121,23 L123,20
+               L126,20 L128,19 L130,16 L132,10 L134,4 L136,2 L138,3 L140,6 L142,11 L144,17 L146,22 L148,28 L150,34 L152,37 L154,38 L156,37 L158,33 L160,28 L162,23 L164,20
+               L167,20 L169,19 L171,16 L173,10 L175,4 L177,2 L179,3 L181,6 L183,11 L185,17 L187,22 L189,28 L191,34 L193,37 L195,38 L197,37 L199,33 L201,28 L203,23 L205,20
+               L208,20 L210,19 L212,16 L214,10 L216,4 L218,2 L220,3 L222,6 L224,11 L226,17 L228,22 L230,28 L232,34 L234,37 L236,38 L238,37 L240,33 L242,28 L244,23 L246,20
+               L249,20 L251,19 L253,16 L255,10 L257,4 L259,2 L261,3 L263,6 L265,11 L267,17 L269,22 L271,28 L273,34 L275,37 L277,38 L279,37 L281,33 L283,28 L285,23 L287,20
+               L290,20 L292,19 L294,16 L296,10 L298,4 L300,2 L302,3 L304,6 L306,11 L308,17 L310,22 L312,28 L314,34 L316,37 L318,38 L320,37 L322,33 L324,28 L326,23 L328,20
+               L331,20 L333,19 L335,16 L337,10 L339,4 L341,2 L343,3 L345,6 L347,11 L349,17 L351,22 L353,28 L355,34 L357,37 L359,38 L361,37 L363,33 L365,28 L367,23 L369,20
+               L372,20 L374,19 L376,16 L378,10 L380,4 L382,2 L384,3 L386,6 L388,11 L390,17 L392,22 L394,28 L396,34 L398,37 L400,38 L402,37 L404,33 L406,28 L408,23 L410,20
+               L413,20 L415,19 L417,16 L419,10 L421,4 L423,2 L425,3 L427,6 L429,11 L431,17 L433,22 L435,28 L437,34 L439,37 L441,38 L443,37 L445,33 L447,28 L449,23 L451,20
+               L454,20 L456,19 L458,16 L460,10 L462,4 L464,2 L466,3 L468,6 L470,11 L472,17 L474,22 L476,28 L478,34 L480,37 L482,38 L484,37 L486,33 L488,28 L490,23 L492,20"/>
         </svg></div>
-        <div class="rhythm-desc">Geniş QRS, düzenli, hızlı. Nabız varsa: Kardiyoversiyon. Nabız yoksa: VF protokolü</div>
+        <div class="rhythm-desc">Geniş QRS (&gt;0.12sn), düzenli sinüzoidal dalgalar, 120-200/dk. Nabız varsa: Kardiyoversiyon. Nabız yoksa: VF protokolü</div>
       </div>
       <!-- SVT -->
       <div class="rhythm-card" onclick="showAlgo('svt')">
@@ -1429,6 +1481,24 @@ function showAlgo(key){
 
 // INIT
 document.getElementById('kkmContainer').style.display='block';
+
+// LOGIN
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim().toLowerCase();
+  const p=document.getElementById('loginPass').value.trim();
+  const err=document.getElementById('loginErr');
+  // kabul edilen: kullanıcı adı "kırklareli" veya "kirklareli", şifre "112"
+  const okUser=['kırklareli','kirklareli','kırklarel̇i'];
+  if(okUser.includes(u) && p==='112'){
+    err.classList.remove('show');
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('roleBox').style.display='flex';
+  } else {
+    err.classList.add('show');
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginPass').focus();
+  }
+}
 </script>
 </body>
 </html>
